@@ -151,5 +151,24 @@ def gitlab_sync(username, password, token, release):
 			pb.update_feature_gitlab(feature, gitlab_url)
 			click.echo(f'... -> {gitlab_url}')
 
+@cli.group('productboard')
+def group_productboard():
+	pass
+
+@group_productboard.command('sync')
+@click.option('--username')
+@click.option('--password')
+@click.option('--token')
+@click.option('--release')
+def productboard_sync(username, password, token, release):
+	pb = Productboard(username, password)
+	gl = gitlab.Gitlab(GITLAB_URL, private_token=token)
+
+	pb.login()
+	r = pb.get_release(release)
+	if not r:
+		raise click.UsageError('No such release')
+
+
 if __name__ == '__main__':
 	cli()
