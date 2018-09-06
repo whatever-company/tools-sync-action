@@ -4,15 +4,28 @@ import re
 import sys
 from uuid import uuid4
 
-import requests
-import gitlab
 import click
+import gitlab
+import requests
 from werkzeug import cached_property
 
 PRODUCTBOARD_URL = 'https://elium.productboard.com'
 PRODUCTBOARD_FEATURE_URL = f'{PRODUCTBOARD_URL}/feature-board/97842-backlog/features'
 GITLAB_URL = 'https://gitlab.com'
 GITLAB_GROUP = 'elium/product'
+
+PRODUCTBOARD_STATUSES = [
+	'New idea',
+	'Need Product Work',
+	'Need Refinement',
+	'Blocked',
+	'Ready',
+	'In progress',
+	'Done',
+	'Staging',
+	'Released in Prod',
+	'Archived',
+]
 
 
 class Productboard:
@@ -46,6 +59,19 @@ class Productboard:
 		for feature in self.all['features']:
 			if feature['release_id'] == release['id']:
 				yield feature
+
+	def feature_by_gitlab_url(self, url):
+		for feature in self.all['features']:
+			col_value = self.get_gitlab_column_value(feature)
+			if col_value and col_value.get('text_value') == url:
+				return feature
+
+	def state_label(self, name=None, state_id=None):
+		""" Get the Id, name behind feature state label or id """
+		for column in self.all['columns']:
+			if column['column_type'] == 'feature_state':
+				if (name and column['name'].lower() == name.lower()) or (state_id and state_id == column['columnable_id']):
+					return column['columnable_id'], column['name']
 
 	@cached_property
 	def gitlab_column(self):
@@ -85,6 +111,17 @@ class Productboard:
 				}
 			)
 			response.raise_for_status()
+
+	def update_feature_status(self, feature, status_id):
+		""" Update feature status with given status ID """
+		response = self.session.put(
+			f"{PRODUCTBOARD_URL}/api/features/{feature['id']}", headers={
+				'X-CSRF-Token': self.csrf_token,
+			}, json={"feature": {
+				"state_id": status_id
+			}}
+		)
+		response.raise_for_status()
 
 
 @click.group()
@@ -168,6 +205,37 @@ def productboard_sync(username, password, token, release):
 	r = pb.get_release(release)
 	if not r:
 		raise click.UsageError('No such release')
+
+
+@group_productboard.command('update-status')
+@click.option('--username')
+@click.option('--password')
+@click.option('--status')
+@click.argument('gitlab-issues', nargs=-1)
+def productboard_update_status(username, password, gitlab_issues, status):
+	""" Update PB status based on gitlab issues status. """
+
+	pb = Productboard(username, password)
+	pb.login()
+
+	if not gitlab_issues:
+		raise click.UsageError('No issue found.')
+
+	new_status_id, new_status_label = pb.state_label(name=status)
+
+	if not new_status_id:
+		raise click.UsageError('Could not find matching status')
+
+	for issue_id in gitlab_issues:
+		issue_url = f'{GITLAB_URL}/{issue_id}'
+		feature = pb.feature_by_gitlab_url(issue_url)
+		old_status_id = feature['state_id']
+		_, old_status_label = pb.state_label(state_id=old_status_id)
+
+		if PRODUCTBOARD_STATUSES.index(old_status_label) < PRODUCTBOARD_STATUSES.index(new_status_label):
+			pb.update_feature_status(feature, new_status_id)
+		else:
+			click.echo(f'Skip issue {feature["id"]}, status is already more advanced')
 
 
 if __name__ == '__main__':
