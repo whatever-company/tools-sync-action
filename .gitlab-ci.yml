@@ -11,7 +11,11 @@ gitlab-to-pb:
     - internal
   image: python:3.6-alpine
   only:
-    - triggers
+    refs:
+      - triggers
+      - web
+    variables:
+      - $PB_STATUS
   script:
     - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
     - pip install pipenv
@@ -25,6 +29,13 @@ pb-to-gitlab:
   image: python:3.6-alpine
   only:
     - triggers
+  only:
+    refs:
+      - triggers
+      - web
+    variables:
+      - $RELEASE
+
   script:
     - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
     - pip install pipenv
