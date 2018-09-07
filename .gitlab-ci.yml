@@ -9,6 +9,7 @@ gitlab-to-pb:
   only:
     - triggers
   script:
+    - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
     - pip install pipenv
     - pipenv install --deploy
     - pipenv run ./productboard.py productboard update-status --username=$PB_USERNAME --password=$PB_PASSWORD --status "$PB_STATUS" $GL_ISSUES
@@ -22,6 +23,7 @@ pb-to-gitlab:
     - master
   when: manual
   script:
+    - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
     - pip install pipenv
     - pipenv install --deploy
     - pipenv run ./productboard.py gitlab sync --username=$PB_USERNAME --password=$PB_PASSWORD --token=$GL_TOKEN --release=$RELEASE
