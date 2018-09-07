@@ -24,8 +24,7 @@ pb-to-gitlab:
     - internal
   image: python:3.6-alpine
   only:
-    - master
-  when: manual
+    - triggers
   script:
     - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
     - pip install pipenv
