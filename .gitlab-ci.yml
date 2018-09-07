@@ -1,6 +1,10 @@
 stages:
   - build
 
+cache:
+  paths:
+    - /root/.local/share/virtualenvs
+
 gitlab-to-pb:
   stage: build
   tags:
