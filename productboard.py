@@ -227,15 +227,20 @@ def productboard_update_status(username, password, gitlab_issues, status):
 		raise click.UsageError('Could not find matching status')
 
 	for issue_id in gitlab_issues:
+		click.echo(f"Processing: {issue_id}")
 		issue_url = f'{GITLAB_URL}/{issue_id}'
 		feature = pb.feature_by_gitlab_url(issue_url)
-		old_status_id = feature['state_id']
-		_, old_status_label = pb.state_label(state_id=old_status_id)
+		if feature:
+			old_status_id = feature['state_id']
+			_, old_status_label = pb.state_label(state_id=old_status_id)
 
-		if PRODUCTBOARD_STATUSES.index(old_status_label) < PRODUCTBOARD_STATUSES.index(new_status_label):
-			pb.update_feature_status(feature, new_status_id)
+			if PRODUCTBOARD_STATUSES.index(old_status_label) < PRODUCTBOARD_STATUSES.index(new_status_label):
+				pb.update_feature_status(feature, new_status_id)
+				click.echo(f'Status of {feature["id"]} updated')
+			else:
+				click.echo(f'Skip issue {feature["id"]}, status is already more advanced')
 		else:
-			click.echo(f'Skip issue {feature["id"]}, status is already more advanced')
+			click.echo(f'feature not found {issue_id}')
 
 
 if __name__ == '__main__':
