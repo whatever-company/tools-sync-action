@@ -19,7 +19,8 @@ pb-to-gitlab:
     - internal
   image: python:3.6-alpine
   only:
-    - manual
+    - master
+  when: manual
   script:
     - pip install pipenv
     - pipenv install --deploy
