@@ -20,7 +20,7 @@ gitlab-to-pb:
     - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
     - pip install pipenv
     - pipenv install --deploy
-    - pipenv run ./productboard.py productboard update-status --username=$PB_USERNAME --password=$PB_PASSWORD --status "$PB_STATUS" $GL_ISSUES
+    - pipenv run ./productboard.py productboard update-status --username "$PB_USERNAME" --password "$PB_PASSWORD" --status "$PB_STATUS" $GL_ISSUES
 
 pb-to-gitlab:
   stage: build
@@ -40,4 +40,4 @@ pb-to-gitlab:
     - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
     - pip install pipenv
     - pipenv install --deploy
-    - pipenv run ./productboard.py gitlab sync --username=$PB_USERNAME --password=$PB_PASSWORD --token=$GL_TOKEN --release=$RELEASE
+    - pipenv run ./productboard.py gitlab sync --username "$PB_USERNAME" --password "$PB_PASSWORD" --token "$GL_TOKEN" --release "$RELEASE"
