@@ -1,4 +1,8 @@
+stages:
+  - build
+
 gitlab-to-pb:
+  stage: build
   tags:
     - internal
   image: python:3.6-alpine
@@ -6,11 +10,11 @@ gitlab-to-pb:
     - triggers
   script:
     - pip install pipenv
-    - bash -c "[ -f .venv/bin/python ] || pipenv --python 3.6"
     - pipenv install --deploy
     - pipenv run ./productboard.py productboard update-status --username=$PB_USERNAME --password=$PB_PASSWORD --status "$PB_STATUS" $GL_ISSUES
 
 pb-to-gitlab:
+  stage: build
   tags:
     - internal
   image: python:3.6-alpine
@@ -18,6 +22,5 @@ pb-to-gitlab:
     - manual
   script:
     - pip install pipenv
-    - bash -c "[ -f .venv/bin/python ] || pipenv --python 3.6"
     - pipenv install --deploy
     - pipenv run ./productboard.py gitlab sync --username=$PB_USERNAME --password=$PB_PASSWORD --token=$GL_TOKEN --release=$RELEASE
