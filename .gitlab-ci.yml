@@ -1,9 +1,12 @@
+variables:
+  PIPENV_VENV_IN_PROJECT: "1"
+
 stages:
   - build
 
 cache:
   paths:
-    - /root/.local/share/virtualenvs/
+    - .venv
 
 gitlab-to-pb:
   stage: build
