@@ -27,6 +27,15 @@ PRODUCTBOARD_STATUSES = [
 	'Archived',
 ]
 
+WEIGHTS = {
+	'XS': 0,
+	'S': 1,
+	'M': 3,
+	'L': 8,
+	'XL': 13,
+	'XXL': 20,
+}
+
 
 class Productboard:
 	def __init__(self, username, password):
@@ -79,10 +88,28 @@ class Productboard:
 			if column['name'] == 'Gitlab':
 				return column['id']
 
+	@cached_property
+	def estimate_column(self):
+		for column in self.all['columns']:
+			if column['name'] == 'T-shirt':
+				return column['id']
+
+	def estimate_label(self, estimate_id):
+		""" Get the Id, name behind feature state label or id """
+		for item in self.all['list_column_items']:
+			if item['id'] == estimate_id:
+				return item['label']
+
 	def get_gitlab_column_value(self, feature):
 		for col_value in self.all['column_values']:
 			if col_value['column_id'] == self.gitlab_column and col_value['feature_id'] == feature['id']:
 				return col_value
+
+	def get_estimate_column_value(self, feature):
+		for col_value in self.all['column_values']:
+			if col_value['column_id'] == self.estimate_column and col_value['feature_id'] == feature['id']:
+				# value is a label in list, should be resolved
+				return self.estimate_label(col_value.get('value'))
 
 	def update_feature_gitlab(self, feature, gitlab_url):
 		col_value = self.get_gitlab_column_value(feature)
@@ -172,16 +199,22 @@ def gitlab_sync(username, password, token, release):
 			project = f'{GITLAB_GROUP}/elium-backend'
 
 		col_value = pb.get_gitlab_column_value(feature)
+
 		if col_value and col_value.get('text_value'):
 			click.echo(f"... feature already linked: {col_value['text_value']}")
 		else:
 			click.echo(f'... creating issue in {project}')
 			gitlab_project = gitlab_projects[project]
-			issue = gitlab_project.issues.create({
+			issue_data = {
 				'title': feature['name'],
 				'description': f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}",
 				'milestone_id': gitlab_milestone.id,
-			})
+			}
+			t_shirt = pb.get_estimate_column_value(feature)
+			if t_shirt:
+				issue_data['weight'] = WEIGHTS[t_shirt]
+
+			issue = gitlab_project.issues.create(issue_data)
 			gitlab_url = f"https://gitlab.com/{project}/issues/{issue.iid}"
 			pb.update_feature_gitlab(feature, gitlab_url)
 			click.echo(f'... -> {gitlab_url}')
