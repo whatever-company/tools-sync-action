@@ -213,7 +213,7 @@ def gitlab_sync(username, password, token, release):
 				editable_issue.weight = WEIGHTS[t_shirt]
 
 			editable_issue.save()
-			click.echo(f'... issue update -> {issue.web_url}')
+			click.echo(f'... issue update -> {editable_issue.web_url}')
 
 		else:
 			click.echo(f'... creating issue in {project}')
