@@ -203,6 +203,11 @@ def gitlab_sync(username, password, token, release):
 			issue_url = col_value['text_value']
 			click.echo(f"... feature already linked: {issue_url}")
 			issue_id = issue_url.split('/')[-1]
+
+			# Find project based on url instead of emoji
+			sub_project = issue_url.split('/')[-3]
+			project = f'{GITLAB_GROUP}/{sub_project}'
+
 			gitlab_project = gitlab_projects[project]
 			editable_issue = gitlab_project.issues.get(issue_id, lazy=True)
 			editable_issue.title = feature['name']
@@ -212,8 +217,11 @@ def gitlab_sync(username, password, token, release):
 			if t_shirt:
 				editable_issue.weight = WEIGHTS[t_shirt]
 
-			editable_issue.save()
-			click.echo(f'... issue update -> {editable_issue.web_url}')
+			try:
+				editable_issue.save()
+				click.echo(f'... issue update -> {editable_issue.web_url}')
+			except gitlab.exceptions.GitlabUpdateError as e:
+				click.secho(f'Error updating issue : {e}', err=True, fg='red')
 
 		else:
 			click.echo(f'... creating issue in {project}')
