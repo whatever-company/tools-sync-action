@@ -204,7 +204,7 @@ def gitlab_sync(username, password, token, release):
 			click.echo(f"... feature already linked: {issue_url}")
 			issue_id = issue_url.split('/')[-1]
 			gitlab_project = gitlab_projects[project]
-			editable_issue = project.issues.get(issue_id, lazy=True)
+			editable_issue = gitlab_project.issues.get(issue_id, lazy=True)
 			editable_issue.title = feature['name']
 			editable_issue.description = f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}"
 			editable_issue.milestone_id = gitlab_milestone.id
