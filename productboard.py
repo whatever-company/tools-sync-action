@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import re
-import sys
 from uuid import uuid4
 
 import click
@@ -201,7 +200,21 @@ def gitlab_sync(username, password, token, release):
 		col_value = pb.get_gitlab_column_value(feature)
 
 		if col_value and col_value.get('text_value'):
-			click.echo(f"... feature already linked: {col_value['text_value']}")
+			issue_url = col_value['text_value']
+			click.echo(f"... feature already linked: {issue_url}")
+			issue_id = issue_url.split('/')[-1]
+			gitlab_project = gitlab_projects[project]
+			editable_issue = project.issues.get(issue_id, lazy=True)
+			editable_issue.title = feature['name']
+			editable_issue.description = f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}"
+			editable_issue.milestone_id = gitlab_milestone.id
+			t_shirt = pb.get_estimate_column_value(feature)
+			if t_shirt:
+				editable_issue.weight = WEIGHTS[t_shirt]
+
+			editable_issue.save()
+			click.echo(f'... issue update -> {issue.web_url}')
+
 		else:
 			click.echo(f'... creating issue in {project}')
 			gitlab_project = gitlab_projects[project]
@@ -215,9 +228,10 @@ def gitlab_sync(username, password, token, release):
 				issue_data['weight'] = WEIGHTS[t_shirt]
 
 			issue = gitlab_project.issues.create(issue_data)
-			gitlab_url = f"https://gitlab.com/{project}/issues/{issue.iid}"
-			pb.update_feature_gitlab(feature, gitlab_url)
-			click.echo(f'... -> {gitlab_url}')
+			issue.unsubscribe()
+
+			pb.update_feature_gitlab(feature, issue.web_url)
+			click.echo(f'... -> {issue.web_url}')
 
 
 @cli.group('productboard')
