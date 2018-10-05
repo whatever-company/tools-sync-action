@@ -196,7 +196,14 @@ def gitlab_sync(username, password, token, release):
 			project = f'{GITLAB_GROUP}/elium-mobile'
 		elif '⚙' in feature['name']:
 			project = f'{GITLAB_GROUP}/elium-backend'
+		labels = []
 
+		if '🐛' in feature['name']:
+			labels.append('Bug')
+		if '💣' in feature['name']:
+			labels.append('SLA')
+		if '🚧' in feature['name']:
+			labels.append('Blocker')
 		col_value = pb.get_gitlab_column_value(feature)
 
 		if col_value and col_value.get('text_value'):
@@ -230,6 +237,7 @@ def gitlab_sync(username, password, token, release):
 				'title': feature['name'],
 				'description': f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}",
 				'milestone_id': gitlab_milestone.id,
+				'labels': labels,
 			}
 			t_shirt = pb.get_estimate_column_value(feature)
 			if t_shirt:
