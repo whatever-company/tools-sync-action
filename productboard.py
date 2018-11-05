@@ -60,7 +60,7 @@ class Productboard:
 
 	def get_release(self, name):
 		for release in self.all['releases']:
-			if release['name'].lower() == name.lower():
+			if (name and release['name'].lower() == name.lower()) or (name is None and release['state'].lower() == 'in-progress'):
 				return release
 
 	def features_by_release(self, release):
