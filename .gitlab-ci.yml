@@ -38,6 +38,7 @@ pb-to-gitlab:
       - web
     variables:
       - $RELEASE
+      - $IN_PROGRESS
 
   script:
     - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
