@@ -23,7 +23,8 @@ gitlab-to-pb:
     - apk add gcc musl-dev python3-dev libffi-dev openssl-dev
     - pip install pipenv
     - pipenv install --deploy
-    - pipenv run ./productboard.py productboard update-status --username "$PB_USERNAME" --password "$PB_PASSWORD" --status "$PB_STATUS" $GL_ISSUES
+    - pipenv run ./productboard.py productboard sync --username "$PB_USERNAME" --password "$PB_PASSWORD" --status "$PB_STATUS" $GL_ISSUES
+    - pipenv run ./productboard.py zendesk sync --username "$ZD_USERNAME" --password "$ZD_PASSWORD" --token "$GL_TOKEN" --status "$PB_STATUS" $GL_ISSUES
 
 pb-to-gitlab:
   stage: build

@@ -13,6 +13,10 @@ PRODUCTBOARD_FEATURE_URL = f'{PRODUCTBOARD_URL}/feature-board/97842-backlog/feat
 GITLAB_URL = 'https://gitlab.com'
 GITLAB_GROUP = 'elium/product'
 
+ZENDESK_TICKET_RE = re.compile("ZD-([0-9]+)")
+ZENDESK_API_ENDPOINT = "https://knowledgeplaza.zendesk.com/api/v2/tickets/update_many.json"
+ZENDESK_CSTEAM_ID = 360003060151
+
 PRODUCTBOARD_STATUSES = [
 	'New idea',
 	'Need Product Work',
@@ -26,6 +30,11 @@ PRODUCTBOARD_STATUSES = [
 	'Archived',
 ]
 
+ZENDESK_STATUS_FROM_PB = {
+	'Staging': 'Staging',
+	'Released in Prod': 'Production',
+}
+
 WEIGHTS = {
 	'XS': 0,
 	'S': 1,
@@ -34,6 +43,18 @@ WEIGHTS = {
 	'XL': 13,
 	'XXL': 20,
 }
+
+
+class EliumGitlab(gitlab.Gitlab):
+	def get_issue_from_url(self, url):
+		""" Fetch gitlab issue using url like: elium/product/elium-backend/issues/352 """
+		url_parts = url.split('/')
+
+		gl_group_name = '/'.join(url_parts[:3])
+		gitlab_project = self.projects.get(gl_group_name)
+		issue = gitlab_project.issues.get(url_parts[-1])
+
+		return issue
 
 
 class Productboard:
@@ -150,6 +171,24 @@ class Productboard:
 		response.raise_for_status()
 
 
+class Zendesk:
+	def __init__(self, username, password):
+		self.username = username
+		self.password = password
+
+	def update_tickets(self, ids, payload):
+		# https://developer.zendesk.com/rest_api/docs/support/tickets#request-body
+
+		querystring = {"ids": ','.join(ids)}
+
+		response = requests.put(ZENDESK_API_ENDPOINT, params=querystring, json=payload, auth=(self.username, self.password))
+
+		return response
+
+	def get_tickets_from_str(self, text):
+		return ZENDESK_TICKET_RE.findall(text)
+
+
 @click.group()
 def cli():
 	pass
@@ -166,8 +205,10 @@ def group_gitlab():
 @click.option('--token')
 @click.option('--release')
 def gitlab_sync(username, password, token, release):
+	""" Create / Update Gitlab issues based on given Productboard Release """
+
 	pb = Productboard(username, password)
-	gl = gitlab.Gitlab(GITLAB_URL, private_token=token)
+	gl = EliumGitlab(GITLAB_URL, private_token=token)
 
 	pb.login()
 	r = pb.get_release(release)
@@ -258,25 +299,10 @@ def group_productboard():
 @group_productboard.command('sync')
 @click.option('--username')
 @click.option('--password')
-@click.option('--token')
-@click.option('--release')
-def productboard_sync(username, password, token, release):
-	pb = Productboard(username, password)
-	gl = gitlab.Gitlab(GITLAB_URL, private_token=token)
-
-	pb.login()
-	r = pb.get_release(release)
-	if not r:
-		raise click.UsageError('No such release')
-
-
-@group_productboard.command('update-status')
-@click.option('--username')
-@click.option('--password')
 @click.option('--status')
 @click.argument('gitlab-issues', nargs=-1)
-def productboard_update_status(username, password, gitlab_issues, status):
-	""" Update PB status based on gitlab issues status. """
+def productboard_sync(username, password, gitlab_issues, status, token, zd_username, zd_password):
+	""" Update productboard status based on gitlab issues"""
 
 	pb = Productboard(username, password)
 	pb.login()
@@ -305,6 +331,54 @@ def productboard_update_status(username, password, gitlab_issues, status):
 				click.echo(f'Skip issue, status is already more advanced')
 		else:
 			click.echo(f'feature not found {issue_id}')
+
+
+@cli.group('zendesk')
+def group_zendesk():
+	pass
+
+
+@group_zendesk.command('sync')
+@click.option('--username')
+@click.option('--password')
+@click.option('--status')
+@click.option('--token')
+@click.argument('gitlab-issues', nargs=-1)
+def zendesk_sync(username, password, gitlab_issues, status, token):
+	""" Update Zendesk status based on gitlab issues"""
+
+	zd = Zendesk(username, password)
+
+	gl = EliumGitlab(GITLAB_URL, private_token=token)
+
+	if not gitlab_issues:
+		raise click.UsageError('No issue found.')
+
+	zd_ticket_ids = []
+	for issue_id in gitlab_issues:
+		gitlab_issue = gl.get_issue_from_url(issue_id)
+		# probably never more than 1
+		zd_ticket_ids = zd_ticket_ids + zd.get_tickets_from_str(gitlab_issue.title)
+
+	# Update zendesk only for given stages
+	if not zd_ticket_ids:
+		click.echo('No zendesk issue to sync')
+	else:
+		if status in ZENDESK_STATUS_FROM_PB:
+			status = {
+				"ticket": {
+					"additional_tags": f"deployed in {ZENDESK_STATUS_FROM_PB[status]}",
+					"comment": {
+						"body": f"A fix was released in {ZENDESK_STATUS_FROM_PB[status]}",
+						"public": False
+					},
+					"assignee_id": ZENDESK_CSTEAM_ID,
+					"status": "open",
+				}
+			}
+			click.echo(f'Update status for {zd_ticket_ids}')
+			response = zd.update_tickets(zd_ticket_ids, status)
+			click.echo(f'ZD update: {response.text}')
 
 
 if __name__ == '__main__':
