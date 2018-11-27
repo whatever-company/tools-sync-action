@@ -301,7 +301,7 @@ def group_productboard():
 @click.option('--password')
 @click.option('--status')
 @click.argument('gitlab-issues', nargs=-1)
-def productboard_sync(username, password, gitlab_issues, status, token, zd_username, zd_password):
+def productboard_sync(username, password, gitlab_issues, status):
 	""" Update productboard status based on gitlab issues"""
 
 	pb = Productboard(username, password)
