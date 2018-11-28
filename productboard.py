@@ -354,30 +354,32 @@ def zendesk_sync(username, password, gitlab_issues, status, token):
 	if not gitlab_issues:
 		raise click.UsageError('No issue found.')
 
-	zd_ticket_ids = []
+	zd_ticket_ids = set()
 	for issue_id in gitlab_issues:
 		gitlab_issue = gl.get_issue_from_url(issue_id)
 		# probably never more than 1
-		zd_ticket_ids = zd_ticket_ids + zd.get_tickets_from_str(gitlab_issue.title)
+		zd_ticket_ids = zd_ticket_ids.union(zd.get_tickets_from_str(gitlab_issue.title))
 
 	# Update zendesk only for given stages
 	if not zd_ticket_ids:
 		click.echo('No zendesk issue to sync')
 	else:
 		if status in ZENDESK_STATUS_FROM_PB:
-			status = {
+			payload = {
 				"ticket": {
-					"additional_tags": f"deployed in {ZENDESK_STATUS_FROM_PB[status]}",
+					"additional_tags": f"deployed-in-{ZENDESK_STATUS_FROM_PB[status]}",
 					"comment": {
 						"body": f"A fix was released in {ZENDESK_STATUS_FROM_PB[status]}",
 						"public": False
 					},
-					"assignee_id": ZENDESK_CSTEAM_ID,
-					"status": "open",
 				}
 			}
+
+			if ZENDESK_STATUS_FROM_PB[status] == 'Production':
+				payload['ticket']['status'] = 'open'
+
 			click.echo(f'Update status for {zd_ticket_ids}')
-			response = zd.update_tickets(zd_ticket_ids, status)
+			response = zd.update_tickets(zd_ticket_ids, payload)
 			click.echo(f'ZD update: {response.text}')
 
 
