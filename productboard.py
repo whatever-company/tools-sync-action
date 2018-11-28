@@ -13,6 +13,8 @@ PRODUCTBOARD_FEATURE_URL = f'{PRODUCTBOARD_URL}/feature-board/97842-backlog/feat
 GITLAB_URL = 'https://gitlab.com'
 GITLAB_GROUP = 'elium/product'
 
+GITLAB_ISSUE_RE = re.compile("#([0-9]+)")
+
 ZENDESK_TICKET_RE = re.compile("ZD-([0-9]+)")
 ZENDESK_API_ENDPOINT = "https://knowledgeplaza.zendesk.com/api/v2/tickets/update_many.json"
 ZENDESK_CSTEAM_ID = 360003060151
@@ -55,6 +57,15 @@ class EliumGitlab(gitlab.Gitlab):
 		issue = gitlab_project.issues.get(url_parts[-1])
 
 		return issue
+
+	def get_issues_from_commits(self, project, from_ref, to_ref):
+		project = self.projects.get(project)
+		gl_issues_ids = set()
+		for commit in project.repository_compare(from_ref, to_ref)['commits']:
+			match = GITLAB_ISSUE_RE.findall(commit['message'])
+			gl_issues_ids = gl_issues_ids.union(set(match))
+
+		return [project.issues.get(i) for i in gl_issues_ids]
 
 
 class Productboard:
@@ -291,6 +302,26 @@ def gitlab_sync(username, password, token, release):
 			click.echo(f'... -> {issue.web_url}')
 
 
+def get_issues_from_list_or_repo(gitlab_client, project, from_ref, to_ref, issues_names):
+	""" Fetch issues using Gitlab's commits messages or
+	the provided issues_names list using the format : elium/product/elium-backend/issues/352
+
+	return a list of gitlab issues object
+	"""
+
+	issues_objects = []
+	# Find Issues using Repo
+	if project and from_ref and to_ref:
+		issues_objects = issues_objects + gitlab_client.get_issues_from_commits(project, from_ref, to_ref)
+
+	if issues_names:
+		# Find Issues usings CLI param
+		for issue_id in issues_names:
+			issues_objects.append(gitlab_client.get_issue_from_url(issue_id))
+
+	return issues_objects
+
+
 @cli.group('productboard')
 def group_productboard():
 	pass
@@ -300,37 +331,41 @@ def group_productboard():
 @click.option('--username')
 @click.option('--password')
 @click.option('--status')
+@click.option('--token')
+@click.option('--project')
+@click.option('--from-ref')
+@click.option('--to-ref')
 @click.argument('gitlab-issues', nargs=-1)
-def productboard_sync(username, password, gitlab_issues, status):
+def productboard_sync(username, password, gitlab_issues, status, token, project, from_ref, to_ref):
 	""" Update productboard status based on gitlab issues"""
 
 	pb = Productboard(username, password)
 	pb.login()
 
-	if not gitlab_issues:
-		raise click.UsageError('No issue found.')
+	gl = EliumGitlab(GITLAB_URL, private_token=token)
 
 	new_status_id, new_status_label = pb.state_label(name=status)
+
+	issues_objects = get_issues_from_list_or_repo(gl, project, from_ref, to_ref, gitlab_issues)
 
 	if not new_status_id:
 		raise click.UsageError('Could not find matching status')
 
-	for issue_id in gitlab_issues:
-		click.echo(f"Processing: {issue_id}")
-		issue_url = f'{GITLAB_URL}/{issue_id}'
-		feature = pb.feature_by_gitlab_url(issue_url)
+	for issue in issues_objects:
+		click.echo(f"Processing: {issue.id} {issue.web_url}")
+		feature = pb.feature_by_gitlab_url(issue.web_url)
 		if feature:
 			click.echo(f'feature {feature["id"]} found: {feature["name"]}')
 			old_status_id = feature['state_id']
 			_, old_status_label = pb.state_label(state_id=old_status_id)
 
 			if PRODUCTBOARD_STATUSES.index(old_status_label) < PRODUCTBOARD_STATUSES.index(new_status_label):
-				pb.update_feature_status(feature, new_status_id)
+				# pb.update_feature_status(feature, new_status_id)
 				click.echo(f'Status updated')
 			else:
 				click.echo(f'Skip issue, status is already more advanced')
 		else:
-			click.echo(f'feature not found {issue_id}')
+			click.echo(f'feature not found {issue.id}')
 
 
 @cli.group('zendesk')
@@ -343,24 +378,26 @@ def group_zendesk():
 @click.option('--password')
 @click.option('--status')
 @click.option('--token')
+@click.option('--project')
+@click.option('--from-ref')
+@click.option('--to-ref')
 @click.argument('gitlab-issues', nargs=-1)
-def zendesk_sync(username, password, gitlab_issues, status, token):
+def zendesk_sync(username, password, gitlab_issues, status, token, project, from_ref, to_ref):
 	""" Update Zendesk status based on gitlab issues"""
 
 	zd = Zendesk(username, password)
 
 	gl = EliumGitlab(GITLAB_URL, private_token=token)
 
-	if not gitlab_issues:
-		raise click.UsageError('No issue found.')
+	issues_objects = get_issues_from_list_or_repo(gl, project, from_ref, to_ref, gitlab_issues)
 
 	zd_ticket_ids = set()
-	for issue_id in gitlab_issues:
-		gitlab_issue = gl.get_issue_from_url(issue_id)
+	# Find Zendesk issues ids
+	for gitlab_issue in issues_objects:
 		# probably never more than 1
 		zd_ticket_ids = zd_ticket_ids.union(zd.get_tickets_from_str(gitlab_issue.title))
 
-	# Update zendesk only for given stages
+	# Update zendesk only for given sta ges
 	if not zd_ticket_ids:
 		click.echo('No zendesk issue to sync')
 	else:
