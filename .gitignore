@@ -1,3 +1,4 @@
 sync.sh
 .vscode
 .venv
+.env
