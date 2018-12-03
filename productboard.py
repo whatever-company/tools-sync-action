@@ -394,7 +394,8 @@ def to_zendesk(ctx, zd_username, zd_password):
 	click.secho('Sync to Zendesk', color="green", underline=True)
 	environment = ctx.obj['environment']
 	if not ctx.obj['issues']:
-		raise click.UsageError('Could not find issues Tag')
+		click.echo('Could not find issues Tag')
+		return
 
 	if environment not in ('Production', 'Staging'):
 		click.echo(f"Not syncing status {environment}")
@@ -442,7 +443,8 @@ def to_productboard(ctx, pb_username, pb_password):
 	click.secho('Sync to Productboard', color="green", underline=True)
 
 	if not ctx.obj['issues']:
-		raise click.UsageError('Could not find issues Tag')
+		click.echo('Could not find issues Tag')
+		return
 
 	pb = Productboard(pb_username, pb_password)
 	pb.login()
