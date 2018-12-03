@@ -1,4 +1,4 @@
-#!/usr/bin/envvar python
+#!/usr/bin/env python
 
 import re
 from urllib.parse import quote_plus
