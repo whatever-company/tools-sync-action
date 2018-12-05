@@ -477,8 +477,8 @@ def to_slack(ctx, slack_url):
 	environment = ctx.obj['environment']
 	project_name = ctx.obj['project'].name
 	project_icon = PROJECT_TO_EMOJI[project_name] if project_name in PROJECT_TO_EMOJI else ''
-	if environment != 'Production':
-		click.echo('Announcing only prod release')
+	if environment not in ('Production', 'Staging'):
+		click.echo('Announcing only prod/staging release')
 		return
 
 	diff_link = ctx.obj['diff_link']
@@ -536,7 +536,7 @@ def to_datadog(ctx, datadog_key):
 	commits = ctx.obj['commits']
 	environment = ctx.obj['environment']
 	payload = {
-		"title": f"Just deployed {to_ref} on {environment} envvar",
+		"title": f"Just deployed {to_ref} on {environment}",
 		"text": f" [{len(commits)} commits]({diff_link})",
 		"priority": "normal",
 		"tags": [f"deployment:{environment}-{to_ref}"],
