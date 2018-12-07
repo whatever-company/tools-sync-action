@@ -399,6 +399,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 
 	if environment not in ('Production', 'Staging'):
 		click.echo(f"Not syncing status {environment}")
+		return
 
 	zd = Zendesk(zd_username, zd_password)
 
