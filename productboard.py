@@ -47,6 +47,7 @@ PROJECT_TO_EMOJI = {
 	'elium-web': '⚛️',
 	'elium-backend': '⚙️',
 	'elium-mobile': '📞',
+	# 'infra/...': '🏗',
 }
 
 WEIGHTS = {
@@ -287,14 +288,20 @@ def to_gitlab(username, password, token, release):
 			project = f'{GITLAB_GROUP}/elium-mobile'
 		elif '⚙' in feature['name']:
 			project = f'{GITLAB_GROUP}/elium-backend'
+		elif '🏗' in feature['name']:
+			# No idea how to map infra projects, let's skip them
+			continue
 		labels = []
 
+		# DEPRECATED
 		if '🐛' in feature['name']:
 			labels.append('Bug')
 		if '💣' in feature['name']:
 			labels.append('SLA')
 		if '🚧' in feature['name']:
 			labels.append('Blocker')
+
+
 		col_value = pb.get_gitlab_column_value(feature)
 
 		if col_value and col_value.get('text_value'):
