@@ -22,7 +22,7 @@ GITLAB_GROUP = 'elium/product'
 GITLAB_ISSUE_RE = re.compile("#([0-9]+)")
 
 ZENDESK_TICKET_RE = re.compile("ZD-([0-9]+)")
-ZENDESK_API_ENDPOINT = "https://knowledgeplaza.zendesk.com/api/v2/tickets/update_many.json"
+ZENDESK_URL = "https://knowledgeplaza.zendesk.com"
 ZENDESK_CSTEAM_ID = 360003060151
 
 PRODUCTBOARD_STATUSES = [
@@ -207,11 +207,18 @@ class Zendesk:
 
 		querystring = {"ids": ','.join(ids)}
 
-		response = requests.put(ZENDESK_API_ENDPOINT, params=querystring, json=payload, auth=(self.username, self.password))
+		response = requests.put(f'{ZENDESK_URL}/api/v2/tickets/update_many.json', params=querystring, json=payload, auth=(self.username, self.password))
 
 		return response
 
-	def get_tickets_from_str(self, text):
+	def get_tickets(self, ids):
+		querystring = {"ids": ','.join(ids)}
+
+		response = requests.get(f'{ZENDESK_URL}/api/v2/tickets/show_many.json', params=querystring, auth=(self.username, self.password))
+
+		return response.json()
+
+	def get_ticket_ids_from_str(self, text):
 		return ZENDESK_TICKET_RE.findall(text)
 
 
@@ -415,7 +422,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 	for gitlab_issue in ctx.obj['issues']:
 		# probably never more than 1 but let's be safe
 		click.echo(f'Processing: {gitlab_issue.title}')
-		zd_id_found = zd.get_tickets_from_str(gitlab_issue.title)
+		zd_id_found = zd.get_ticket_ids_from_str(gitlab_issue.title)
 		zd_ticket_ids = zd_ticket_ids.union(zd_id_found)
 		if zd_id_found:
 			click.echo(f'Found {zd_id_found}')
@@ -423,23 +430,38 @@ def to_zendesk(ctx, zd_username, zd_password):
 	# Update zendesk only for given stages
 	if not zd_ticket_ids:
 		click.echo('No zendesk issue to sync')
-	else:
-		payload = {
-			"ticket": {
-				"additional_tags": f"deployed-in-{environment}",
-				"comment": {
-					"body": f"A fix was released in {environment}",
-					"public": False
-				},
-			}
+		return
+
+	payload = {
+		"ticket": {
+			"additional_tags": f"deployed-in-{environment}",
+			"comment": {
+				"body": f"A fix was released in {environment}",
+				"public": False
+			},
 		}
+	}
+
+	click.echo(f'Fetching tickets: {zd_ticket_ids}')
+
+	tickets = zd.get_tickets(zd_ticket_ids)
+
+	for ticket in tickets['tickets']:
+		click.echo(f'got {ticket["id"]} in status : {ticket["status"]}')
+
+		if 'deployed-in-production' in ticket['tags']:
+			click.echo(f'skip {ticket["id"]}, already in production')
+			continue
+		if environment == 'Staging' and 'deployed-in-staging' in ticket['tags']:
+			click.echo(f'skip {ticket["id"]}, already marked as synced in staging')
+			continue
 
 		if environment == 'Production':
 			payload['ticket']['status'] = 'open'
 
-		click.echo(f'Update status for {zd_ticket_ids}')
+		click.echo(f'syncing ticket {ticket["id"]}')
 		if not ctx.obj.get('dry_run', False):
-			response = zd.update_tickets(zd_ticket_ids, payload)
+			response = zd.update_tickets(ticket["id"], payload)
 			click.echo(f'ZD update: {response.text}')
 
 
