@@ -461,7 +461,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 
 		click.echo(f'syncing ticket {ticket["id"]}')
 		if not ctx.obj.get('dry_run', False):
-			response = zd.update_tickets(ticket["id"], payload)
+			response = zd.update_tickets([ticket["id"]], payload)
 			click.echo(f'ZD update: {response.text}')
 
 
