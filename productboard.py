@@ -79,8 +79,13 @@ class EliumGitlab(gitlab.Gitlab):
 		for commit in commits:
 			match = GITLAB_ISSUE_RE.findall(commit['message'])
 			gl_issues_ids = gl_issues_ids.union(set(match))
-
-		return [project.issues.get(i) for i in gl_issues_ids]
+		issues = [] 
+		for i in gl_issues_ids:
+			try:
+				issues.append(project.issues.get(i))
+			except gitlab.exceptions.GitlabGetError:
+				pass
+		return issues
 
 
 class Productboard:
