@@ -117,8 +117,10 @@ class Productboard:
 				return release
 
 	def features_by_release(self, release):
+		feature_ids = [i['feature_id'] for i in self.all['release_assignments'] if i['release_id'] == release['id']]
+			
 		for feature in self.all['features']:
-			if feature['release_id'] == release['id']:
+			if feature['id'] in feature_ids:
 				yield feature
 
 	def feature_by_gitlab_url(self, url):
