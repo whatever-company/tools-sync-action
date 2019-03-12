@@ -416,7 +416,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 		click.echo('Could not find issues Tag')
 		return
 
-	if environment not in ('Production', 'Staging'):
+	if environment not in ('Production', 'Staging', 'Development'):
 		click.echo(f"Not syncing status {environment}")
 		return
 
@@ -454,11 +454,15 @@ def to_zendesk(ctx, zd_username, zd_password):
 	for ticket in tickets['tickets']:
 		click.echo(f'got {ticket["id"]} in status : {ticket["status"]}')
 
+		# Avoid resync what's already synced
 		if 'deployed-in-production' in ticket['tags']:
 			click.echo(f'skip {ticket["id"]}, already in production')
 			continue
-		if environment == 'Staging' and 'deployed-in-staging' in ticket['tags']:
+		if 'deployed-in-staging' in ticket['tags'] and environment != 'Production':
 			click.echo(f'skip {ticket["id"]}, already marked as synced in staging')
+			continue
+		if 'deployed-in-development' in ticket['tags'] and environment not in ('Production', 'Staging'):
+			click.echo(f'skip {ticket["id"]}, already marked as synced in development')
 			continue
 
 		if environment == 'Production':
