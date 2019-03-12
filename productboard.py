@@ -423,6 +423,15 @@ def to_zendesk(ctx, zd_username, zd_password):
 	zd = Zendesk(zd_username, zd_password)
 
 	zd_ticket_ids = set()
+
+	# Find Zendesk issues in commit messages
+	for commit in ctx.obj['commits']:
+		click.echo(f"Processing: {commit['short_id']}")
+		zd_id_found = zd.get_ticket_ids_from_str(commit['message'])
+		zd_ticket_ids = zd_ticket_ids.union(zd_id_found)
+		if zd_id_found:
+			click.echo(f'Found {zd_id_found}')
+
 	# Find Zendesk issues ids
 	for gitlab_issue in ctx.obj['issues']:
 		# probably never more than 1 but let's be safe
