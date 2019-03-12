@@ -23,7 +23,8 @@ GITLAB_ISSUE_RE = re.compile("#([0-9]+)")
 
 ZENDESK_TICKET_RE = re.compile("ZD-([0-9]+)")
 ZENDESK_URL = "https://knowledgeplaza.zendesk.com"
-ZENDESK_CSTEAM_ID = 360003060151
+ZENDESK_CS_TEAM_ID = 22392423
+ZENDESK_BUGS_TEAM_ID = 360003060151
 
 PRODUCTBOARD_STATUSES = [
 	'New idea',
@@ -476,6 +477,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 
 		if environment == 'Production':
 			payload['ticket']['status'] = 'open'
+			payload['ticket']['group_id'] = ZENDESK_CS_TEAM_ID
 
 		click.echo(f'syncing ticket {ticket["id"]}')
 		if not ctx.obj.get('dry_run', False):
