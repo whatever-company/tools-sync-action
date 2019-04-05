@@ -477,7 +477,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 			click.echo(f'skip {ticket["id"]}, already marked as synced in development')
 			continue
 
-		if environment == 'Production':
+		if environment == 'Production' and ticket['status'] not in ('closed', 'solved'):
 			payload['ticket']['status'] = 'open'
 			payload['ticket']['group_id'] = ZENDESK_CS_TEAM_ID
 
