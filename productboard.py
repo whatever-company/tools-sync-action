@@ -449,21 +449,21 @@ def to_zendesk(ctx, zd_username, zd_password):
 		click.echo('No zendesk issue to sync')
 		return
 
-	payload = {
-		"ticket": {
-			"additional_tags": f"deployed-in-{environment}",
-			"comment": {
-				"body": f"A fix was released in {environment}",
-				"public": False
-			},
-		}
-	}
-
 	click.echo(f'Fetching tickets: {zd_ticket_ids}')
 
 	tickets = zd.get_tickets(zd_ticket_ids)
 
 	for ticket in tickets['tickets']:
+		payload = {
+			"ticket": {
+				"additional_tags": f"deployed-in-{environment}",
+				"comment": {
+					"body": f"A fix was released in {environment}",
+					"public": False
+				},
+			}
+		}
+
 		click.echo(f'got {ticket["id"]} in status : {ticket["status"]}')
 
 		# Avoid resync what's already synced
