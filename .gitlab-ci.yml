@@ -42,6 +42,7 @@ pb-to-gitlab:
     refs:
       - triggers
       - web
+      - schedules
     variables:
       - $RELEASE
       - $IN_PROGRESS

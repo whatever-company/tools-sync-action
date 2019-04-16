@@ -80,7 +80,7 @@ class EliumGitlab(gitlab.Gitlab):
 		for commit in commits:
 			match = GITLAB_ISSUE_RE.findall(commit['message'])
 			gl_issues_ids = gl_issues_ids.union(set(match))
-		issues = [] 
+		issues = []
 		for i in gl_issues_ids:
 			try:
 				issues.append(project.issues.get(i))
@@ -118,7 +118,7 @@ class Productboard:
 
 	def features_by_release(self, release):
 		feature_ids = [i['feature_id'] for i in self.all['release_assignments'] if i['release_id'] == release['id']]
-			
+
 		for feature in self.all['features']:
 			if feature['id'] in feature_ids:
 				yield feature
@@ -277,16 +277,16 @@ def to_gitlab(username, password, token, release):
 	gl = EliumGitlab(GITLAB_URL, private_token=token)
 
 	pb.login()
-	r = pb.get_release(release)
-	if not r:
+	productboard_release = pb.get_release(release)
+	if not productboard_release:
 		raise click.UsageError('No such release')
 
 	gitlab_group = gl.groups.get(GITLAB_GROUP)
 	try:
-		gitlab_milestone = gitlab_group.milestones.create({'title': release})
+		gitlab_milestone = gitlab_group.milestones.create({'title': productboard_release['name']})
 		click.echo(f'Creating new group milestone in {GITLAB_GROUP}: {gitlab_milestone.title}')
-	except gitlab.exceptions.GitlabCreateError:
-		gitlab_milestones = gitlab_group.milestones.list(search=release.lower())
+	except (gitlab.exceptions.GitlabCreateError, gitlab.exceptions.GitlabHttpError):
+		gitlab_milestones = gitlab_group.milestones.list(search=productboard_release['name'].lower())
 		if gitlab_milestones:
 			gitlab_milestone = gitlab_milestones[0]
 			click.echo(f'Using existing milestone: {gitlab_milestone.title}')
@@ -295,7 +295,7 @@ def to_gitlab(username, password, token, release):
 
 	gitlab_projects = {project: gl.projects.get(project) for project in (f'{GITLAB_GROUP}/elium-web', f'{GITLAB_GROUP}/elium-mobile', f'{GITLAB_GROUP}/elium-backend')}
 
-	for feature in pb.features_by_release(r):
+	for feature in pb.features_by_release(productboard_release):
 		click.echo(f"Processing: {feature['name']}")
 
 		project = f'{GITLAB_GROUP}/elium-web'
