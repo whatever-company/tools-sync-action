@@ -591,7 +591,7 @@ def to_datadog(ctx, datadog_key):
 		"title": f"Just deployed {to_ref} on {environment}",
 		"text": f" [{len(commits)} commits]({diff_link})",
 		"priority": "normal",
-		"tags": [f"deployment:{environment}-{to_ref}"],
+		"tags": [f"deployment:{environment}"],
 		"alert_type": "info",
 		"source": "Git",
 	}
