@@ -10,8 +10,6 @@ cache:
 
 gitlab-to-pb:
   stage: build
-  tags:
-    - internal
   image: python:3.6-alpine
   only:
     refs:
@@ -33,8 +31,6 @@ gitlab-to-pb:
 
 pb-to-gitlab:
   stage: build
-  tags:
-    - internal
   image: python:3.6-alpine
   only:
     - triggers
