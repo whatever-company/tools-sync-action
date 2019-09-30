@@ -415,9 +415,6 @@ def group_from_gitlab(ctx, token, project, from_ref, to_ref, status, gitlab_issu
 def to_zendesk(ctx, zd_username, zd_password):
 	click.secho('Sync to Zendesk', color="green", underline=True)
 	environment = ctx.obj['environment']
-	if not ctx.obj['issues']:
-		click.echo('Could not find issues Tag')
-		return
 
 	if environment not in ('Production', 'Staging', 'Development'):
 		click.echo(f"Not syncing status {environment}")
