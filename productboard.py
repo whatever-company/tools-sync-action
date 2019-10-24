@@ -96,7 +96,7 @@ class Productboard:
 		self.session = requests.Session()
 
 	def login(self):
-		self.csrf_token = re.search(r'\<meta name=\"csrf-token\" content=\"(.*)\"', self.session.get(PRODUCTBOARD_URL).text).group(1)
+		self.csrf_token = re.search(r'window.csrfToken = \'(.*)\'', self.session.get(PRODUCTBOARD_URL).text).group(1)
 		self.session.post(
 			f'{PRODUCTBOARD_URL}/users/sign_in', headers={
 				'X-CSRF-Token': self.csrf_token,
@@ -104,8 +104,7 @@ class Productboard:
 				'user[email]': self.username,
 				'user[password]': self.password,
 			}
-		).raise_for_status()
-		self.csrf_token = re.search(r'window.csrfToken = \'(.*)\'', self.session.get(PRODUCTBOARD_URL).text).group(1)
+		)
 
 	@cached_property
 	def all(self):
@@ -491,13 +490,13 @@ def to_zendesk(ctx, zd_username, zd_password):
 def to_productboard(ctx, pb_username, pb_password):
 	click.secho('Sync to Productboard', color="green", underline=True)
 
+
+	pb = Productboard(pb_username, pb_password)
+	# print("ici", pb.all)
+	pb.login()
 	if not ctx.obj['issues']:
 		click.echo('Could not find issues Tag')
 		return
-
-	pb = Productboard(pb_username, pb_password)
-	pb.login()
-
 	new_status_id, new_status_label = pb.state_label(name=ctx.obj['status'])
 
 	for issue in ctx.obj['issues']:
