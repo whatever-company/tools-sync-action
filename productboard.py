@@ -105,6 +105,10 @@ class Productboard:
 				'user[password]': self.password,
 			}
 		)
+		self.fetch_csrf()
+
+	def fetch_csrf(self):
+		self.csrf_token = re.search(r'window.csrfToken = \'(.*)\'', self.session.get(PRODUCTBOARD_URL).text).group(1)
 
 	@cached_property
 	def all(self):
@@ -170,6 +174,7 @@ class Productboard:
 			response = self.session.put(
 				f"{PRODUCTBOARD_URL}/api/column_values/{col_value['id']}", headers={
 					'X-CSRF-Token': self.csrf_token,
+					'Content-Type': 'application/json',
 				}, json={"column_value": {
 					"text_value": gitlab_url
 				}}
@@ -180,6 +185,7 @@ class Productboard:
 				f"{PRODUCTBOARD_URL}/api/column_values",
 				headers={
 					'X-CSRF-Token': self.csrf_token,
+					'Content-Type': 'application/json',
 				},
 				json={
 					"column_value": {
@@ -197,6 +203,7 @@ class Productboard:
 		response = self.session.put(
 			f"{PRODUCTBOARD_URL}/api/features/{feature['id']}", headers={
 				'X-CSRF-Token': self.csrf_token,
+				'Content-Type': 'application/json',
 			}, json={"feature": {
 				"state_id": status_id
 			}}
