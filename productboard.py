@@ -268,8 +268,11 @@ def cli():
 
 
 @cli.group('from_productboard')
-def from_productboard():
-	pass
+@click.option('--dry-run', is_flag=True)
+@click.pass_context
+def from_productboard(ctx, dry_run):
+	ctx.ensure_object(dict)
+	ctx.obj['dry_run'] = dry_run
 
 
 @from_productboard.command('to_gitlab')
@@ -277,9 +280,9 @@ def from_productboard():
 @click.option('--password', envvar="PB_PASSWORD")
 @click.option('--token', envvar="GL_TOKEN")
 @click.option('--release', envvar="RELEASE")
-def to_gitlab(username, password, token, release):
+@click.pass_context
+def to_gitlab(ctx, username, password, token, release):
 	""" Create / Update Gitlab issues based on given Productboard Release """
-
 	pb = Productboard(username, password)
 	gl = EliumGitlab(GITLAB_URL, private_token=token)
 
@@ -300,28 +303,17 @@ def to_gitlab(username, password, token, release):
 		else:
 			raise click.UsageError('Milestone was not found')
 
-	gitlab_projects = {
-		project: gl.projects.get(project) for project in (
-			f'{GITLAB_GROUP}/elium-web',
-			f'{GITLAB_GROUP}/elium-mobile',
-			f'{GITLAB_GROUP}/elium-backend',
-			f'{GITLAB_GROUP}/elium-gatsby',
-		)
-	}
+	gitlab_projects = {f'{GITLAB_GROUP}/{project}': gl.projects.get(f'{GITLAB_GROUP}/{project}') for project in PROJECT_TO_EMOJI}
 
 	for feature in pb.features_by_release(productboard_release):
 		click.echo(f"Processing: {feature['name']}")
 
 		project = f'{GITLAB_GROUP}/elium-web'
-		if '📞' in feature['name']:
-			project = f'{GITLAB_GROUP}/elium-mobile'
-		elif '⚙' in feature['name']:
-			project = f'{GITLAB_GROUP}/elium-backend'
-		elif '🌍' in feature['name']:
-			project = f'{GITLAB_GROUP}/elium-gatsby'
-		elif '🏗' in feature['name']:
-			# No idea how to map infra projects, let's skip them
-			continue
+		# Map Emoji to Project
+		for project_url, emoji in PROJECT_TO_EMOJI.items():
+			if emoji in feature['name']:
+				project = f'{GITLAB_GROUP}/{project_url}'
+				break
 		labels = []
 
 		# DEPRECATED
@@ -332,11 +324,12 @@ def to_gitlab(username, password, token, release):
 		if '🚧' in feature['name']:
 			labels.append('Blocker')
 
+		# Get the value of the gitlab URL field in productboard
+		pb_gitlab_link = pb.get_gitlab_column_value(feature)
 
-		col_value = pb.get_gitlab_column_value(feature)
-
-		if col_value and col_value.get('text_value'):
-			issue_url = col_value['text_value']
+		if pb_gitlab_link and pb_gitlab_link.get('text_value'):
+			# Issue exists, let's update it
+			issue_url = pb_gitlab_link['text_value']
 			click.echo(f"... feature already linked: {issue_url}")
 			issue_id = issue_url.split('/')[-1]
 
@@ -354,7 +347,8 @@ def to_gitlab(username, password, token, release):
 				editable_issue.weight = WEIGHTS[t_shirt]
 
 			try:
-				editable_issue.save()
+				if not ctx.obj.get('dry_run', False):
+					editable_issue.save()
 				click.echo(f'... issue update -> {editable_issue.web_url}')
 			except gitlab.exceptions.GitlabUpdateError as e:
 				click.secho(f'Error updating issue : {e}', err=True, fg='red')
@@ -372,11 +366,13 @@ def to_gitlab(username, password, token, release):
 			if t_shirt:
 				issue_data['weight'] = WEIGHTS[t_shirt]
 
-			issue = gitlab_project.issues.create(issue_data)
-			issue.unsubscribe()
-
-			pb.update_feature_gitlab(feature, issue.web_url)
-			click.echo(f'... -> {issue.web_url}')
+			if not ctx.obj.get('dry_run', False):
+				issue = gitlab_project.issues.create(issue_data)
+				issue.unsubscribe()
+				pb.update_feature_gitlab(feature, issue.web_url)
+				click.echo(f'... -> {issue.web_url}')
+			else:
+				click.echo(f'Dry run issue created {issue_data}')
 
 
 @cli.group('from_gitlab', chain=True)
@@ -506,7 +502,6 @@ def to_zendesk(ctx, zd_username, zd_password):
 @click.pass_context
 def to_productboard(ctx, pb_username, pb_password):
 	click.secho('Sync to Productboard', color="green", underline=True)
-
 
 	pb = Productboard(pb_username, pb_password)
 	# print("ici", pb.all)
