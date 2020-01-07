@@ -300,7 +300,14 @@ def to_gitlab(username, password, token, release):
 		else:
 			raise click.UsageError('Milestone was not found')
 
-	gitlab_projects = {project: gl.projects.get(project) for project in (f'{GITLAB_GROUP}/elium-web', f'{GITLAB_GROUP}/elium-mobile', f'{GITLAB_GROUP}/elium-backend')}
+	gitlab_projects = {
+		project: gl.projects.get(project) for project in (
+			f'{GITLAB_GROUP}/elium-web',
+			f'{GITLAB_GROUP}/elium-mobile',
+			f'{GITLAB_GROUP}/elium-backend',
+			f'{GITLAB_GROUP}/elium-gatsby',
+		)
+	}
 
 	for feature in pb.features_by_release(productboard_release):
 		click.echo(f"Processing: {feature['name']}")
@@ -310,6 +317,8 @@ def to_gitlab(username, password, token, release):
 			project = f'{GITLAB_GROUP}/elium-mobile'
 		elif '⚙' in feature['name']:
 			project = f'{GITLAB_GROUP}/elium-backend'
+		elif '🌍' in feature['name']:
+			project = f'{GITLAB_GROUP}/elium-gatsby'
 		elif '🏗' in feature['name']:
 			# No idea how to map infra projects, let's skip them
 			continue
