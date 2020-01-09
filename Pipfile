@@ -13,7 +13,7 @@ python-dotenv = "*"
 [dev-packages]
 pylint = "==2.4.4"
 "flake8" = "*"
-yapf = "==0.23.0"
+yapf = "==0.29.0"
 
 [requires]
 python_version = "3.6"
