@@ -11,7 +11,7 @@ werkzeug = "*"
 python-dotenv = "*"
 
 [dev-packages]
-pylint = "==2.1.1"
+pylint = "==2.4.4"
 "flake8" = "*"
 yapf = "==0.23.0"
 
