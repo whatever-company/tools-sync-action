@@ -49,6 +49,7 @@ PROJECT_TO_EMOJI = {
 	'elium-backend': '⚙️',
 	'elium-mobile': '📞',
 	'elium-gatsby': '🌍',
+	'learn': '📄',
 	# 'infra/...': '🏗',
 }
 
