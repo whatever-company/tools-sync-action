@@ -1,7 +1,7 @@
 # Installation
 
-    pipenv install
-    pipenv shell
+    poetry install
+    poetry shell
 
 # Syncing Productboard features into gitlab
 
@@ -13,5 +13,4 @@ After creating the issue in gitlab, it will backfill the 'Gitlab' field in produ
 
 It will also create the milestone in gitlab if it doesn't exist yet as a group milestone. All issues are linked to this milestone
 
-    ./productboard.py gitlab sync --username '$PB_USERNAME' --password '$PB_PASSWORD' --token '$GL_TOKEN' --release "$SPRINT"
-
+    ./dev-sync.py gitlab sync --username '$PB_USERNAME' --password '$PB_PASSWORD' --token '$GL_TOKEN' --release "$SPRINT"
