@@ -7,6 +7,7 @@ import json
 
 import click
 import gitlab
+from github import Github
 import requests
 from dotenv import load_dotenv
 from werkzeug.utils import cached_property
@@ -18,9 +19,9 @@ PRODUCTBOARD_URL = 'https://elium.productboard.com'
 PRODUCTBOARD_FEATURE_URL = f'{PRODUCTBOARD_URL}/feature-board/97842-backlog/features'
 GITLAB_URL = 'https://gitlab.com'
 GITLAB_GROUP = 'elium/product'
-
 GITLAB_ISSUE_RE = re.compile("#([0-9]+)")
 
+GITHUB_ORGANISATION = 'whatever-company'
 ZENDESK_TICKET_RE = re.compile("ZD-([0-9]+)")
 ZENDESK_URL = "https://knowledgeplaza.zendesk.com"
 ZENDESK_CS_TEAM_ID = 22392423
@@ -374,6 +375,76 @@ def to_gitlab(ctx, username, password, token, release):
 				click.echo(f'... -> {issue.web_url}')
 			else:
 				click.echo(f'Dry run issue created {issue_data}')
+
+
+@from_productboard.command('to_github')
+@click.option('--username', envvar="PB_USERNAME")
+@click.option('--password', envvar="PB_PASSWORD")
+@click.option('--token', envvar="GH_TOKEN")
+@click.option('--release', envvar="RELEASE")
+@click.pass_context
+def to_github(ctx, username, password, token, release):
+	""" Create / Update Gitlab issues based on given Productboard Release """
+	pb = Productboard(username, password)
+	gh = Github(token)
+
+	pb.login()
+
+	productboard_release = pb.get_release(release)
+	if not productboard_release:
+		raise click.UsageError('No such release')
+
+	github_org = gh.get_organization(GITHUB_ORGANISATION)
+	github_projects = {f'{GITHUB_ORGANISATION}/{project}': gh.get_repo(f'{GITHUB_ORGANISATION}/{project}') for project in PROJECT_TO_EMOJI}
+
+	for feature in pb.features_by_release(productboard_release):
+		click.echo(f"Processing: {feature['name']}")
+
+		project = f'{GITHUB_ORGANISATION}/elium-web'
+		# Map Emoji to Project
+		for project_url, emoji in PROJECT_TO_EMOJI.items():
+			if emoji in feature['name']:
+				project = f'{GITHUB_ORGANISATION}/{project_url}'
+				break
+		labels = []
+
+		pb_github_link = pb.get_gitlab_column_value(feature)
+
+		if pb_github_link and pb_github_link.get('text_value'):
+			# Issue exists, let's update it
+			issue_url = pb_github_link['text_value']
+			click.echo(f"... feature already linked: {issue_url}")
+			issue_id = issue_url.split('/')[-1]
+
+			# Find project based on url instead of emoji
+			sub_project = issue_url.split('/')[-3]
+			project = f'{GITHUB_ORGANISATION}/{sub_project}'
+
+			github_project = github_projects[project]
+			issue = github_project.get_issue(issue_id)
+			title = feature['name']
+			description = f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}"
+
+			try:
+				if not ctx.obj.get('dry_run', False):
+					issue.edit(title=title, body=description)
+				click.echo(f'... issue update -> {issue.url}')
+			except gitlab.exceptions.GitlabUpdateError as e:
+				click.secho(f'Error updating issue : {e}', err=True, fg='red')
+
+		else:
+			click.echo(f'... creating issue in {project}')
+			github_project = github_projects[project]
+
+			if not ctx.obj.get('dry_run', False):
+				issue = github_projects.create_issue(
+					title=feature['name'],
+					body=f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}",
+				)
+				pb.update_feature_gitlab(feature, issue.url)
+				click.echo(f'... -> {issue.url}')
+			else:
+				click.echo(f'Dry run issue created')
 
 
 @cli.group('from_gitlab', chain=True)
