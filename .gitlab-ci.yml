@@ -1,9 +1,9 @@
 stages:
   - build
 
-cache:
-  paths:
-    - .venv
+# cache:
+#   paths:
+#     - .venv
 
 gitlab-to-pb:
   stage: build
