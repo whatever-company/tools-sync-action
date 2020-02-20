@@ -1,0 +1,45 @@
+[MASTER]
+#jobs=4
+py3k=true
+extension-pkg-whitelist=lxml,icu
+
+[MESSAGES CONTROL]
+enable=all
+disable=
+    I,
+    design,
+    protected-access,
+    missing-docstring,
+    invalid-name,
+    line-too-long,
+    bad-continuation,
+    fixme,
+	bare-except,
+    no-self-use,
+    no-else-return,
+    singleton-comparison,
+    attribute-defined-outside-init,
+    abstract-method,
+    broad-except,
+    inconsistent-return-statements,
+    too-many-lines,
+    no-absolute-import
+
+[FORMAT]
+indent-string=\t
+indent-after-paren=1
+
+[IMPORTS]
+
+[VARIABLES]
+
+[CLASSES]
+valid-classmethod-first-arg=kls
+
+[TYPECHECK]
+#generated-members=
+ignored-classes=KpSQLAlchemy,SQLAlchemy
+
+[REPORTS]
+reports=no
+score=no
