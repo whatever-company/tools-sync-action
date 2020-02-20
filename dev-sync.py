@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 
 import re
-from urllib.parse import quote_plus
 from uuid import uuid4
 import json
 
 import click
-import gitlab
-from github import Github
+from github import Github, GithubException
 import requests
 from dotenv import load_dotenv
 from werkzeug.utils import cached_property
@@ -17,9 +15,7 @@ load_dotenv()
 
 PRODUCTBOARD_URL = 'https://elium.productboard.com'
 PRODUCTBOARD_FEATURE_URL = f'{PRODUCTBOARD_URL}/feature-board/97842-backlog/features'
-GITLAB_URL = 'https://gitlab.com'
-GITLAB_GROUP = 'elium/product'
-GITLAB_ISSUE_RE = re.compile("#([0-9]+)")
+ISSUE_RE = re.compile("#([0-9]+)")
 
 GITHUB_ORGANISATION = 'whatever-company'
 ZENDESK_TICKET_RE = re.compile("ZD-([0-9]+)")
@@ -64,32 +60,18 @@ WEIGHTS = {
 }
 
 
-class EliumGitlab(gitlab.Gitlab):
-	def get_issue_from_url(self, url):
-		""" Fetch gitlab issue using url like: elium/product/elium-backend/issues/352 """
-		url_parts = url.split('/')
-
-		gl_group_name = '/'.join(url_parts[:3])
-		gitlab_project = self.projects.get(gl_group_name)
-		issue = gitlab_project.issues.get(url_parts[-1])
-
-		return issue
-
-	def get_diff_link(self, project, from_ref, to_ref):
-		return f"{GITLAB_URL}/{project}/compare/{quote_plus(from_ref)}...{quote_plus(to_ref)}"
-
-	def get_issues_from_commits(self, project, commits):
-		gl_issues_ids = set()
-		for commit in commits:
-			match = GITLAB_ISSUE_RE.findall(commit['message'])
-			gl_issues_ids = gl_issues_ids.union(set(match))
-		issues = []
-		for i in gl_issues_ids:
-			try:
-				issues.append(project.issues.get(i))
-			except gitlab.exceptions.GitlabGetError:
-				pass
-		return issues
+def get_issues_from_commits(project, commits):
+	issues_ids = set()
+	for commit in commits:
+		match = ISSUE_RE.findall(commit.commit.message)
+		issues_ids = issues_ids.union(set(match))
+	issues = []
+	for i in issues_ids:
+		try:
+			issues.append(project.get_issue(int(i)))
+		except GithubException:
+			pass
+	return issues
 
 
 class Productboard:
@@ -239,27 +221,23 @@ class Zendesk:
 		return ZENDESK_TICKET_RE.findall(text)
 
 
-def get_commits(project, from_ref, to_ref):
-	return project.repository_compare(from_ref, to_ref)['commits']
+def get_issues_from_gh_list_or_repo(github_client, project, commits, issues_names):
+	""" Fetch issues using Github's commits messages or
+	the provided issues_names list using the format : whatever-company/elium-backend/issues/352
 
-
-def get_issues_from_list_or_repo(gitlab_client, project, commits, issues_names):
-	""" Fetch issues using Gitlab's commits messages or
-	the provided issues_names list using the format : elium/product/elium-backend/issues/352
-
-	return a list of gitlab issues object
+	return a list of github issues object
 	"""
 
 	issues_objects = []
 	# Find Issues using Repo
 	if commits:
-		issues_from_commits = gitlab_client.get_issues_from_commits(project, commits)
+		issues_from_commits = get_issues_from_commits(project, commits)
 		issues_objects = issues_objects + issues_from_commits
 
 	if issues_names:
 		# Find Issues usings CLI param
 		for issue_id in issues_names:
-			issues_objects.append(gitlab_client.get_issue_from_url(issue_id))
+			issues_objects.append(github_client.get_issue_from_url(issue_id))
 
 	return issues_objects
 
@@ -277,106 +255,6 @@ def from_productboard(ctx, dry_run):
 	ctx.obj['dry_run'] = dry_run
 
 
-@from_productboard.command('to_gitlab')
-@click.option('--username', envvar="PB_USERNAME")
-@click.option('--password', envvar="PB_PASSWORD")
-@click.option('--token', envvar="GL_TOKEN")
-@click.option('--release', envvar="RELEASE")
-@click.pass_context
-def to_gitlab(ctx, username, password, token, release):
-	""" Create / Update Gitlab issues based on given Productboard Release """
-	pb = Productboard(username, password)
-	gl = EliumGitlab(GITLAB_URL, private_token=token)
-
-	pb.login()
-	productboard_release = pb.get_release(release)
-	if not productboard_release:
-		raise click.UsageError('No such release')
-
-	gitlab_group = gl.groups.get(GITLAB_GROUP)
-	try:
-		gitlab_milestone = gitlab_group.milestones.create({'title': productboard_release['name']})
-		click.echo(f'Creating new group milestone in {GITLAB_GROUP}: {gitlab_milestone.title}')
-	except (gitlab.exceptions.GitlabCreateError, gitlab.exceptions.GitlabHttpError):
-		gitlab_milestones = gitlab_group.milestones.list(search=productboard_release['name'].lower())
-		if gitlab_milestones:
-			gitlab_milestone = gitlab_milestones[0]
-			click.echo(f'Using existing milestone: {gitlab_milestone.title}')
-		else:
-			raise click.UsageError('Milestone was not found')
-
-	gitlab_projects = {f'{GITLAB_GROUP}/{project}': gl.projects.get(f'{GITLAB_GROUP}/{project}') for project in PROJECT_TO_EMOJI}
-
-	for feature in pb.features_by_release(productboard_release):
-		click.echo(f"Processing: {feature['name']}")
-
-		project = f'{GITLAB_GROUP}/elium-web'
-		# Map Emoji to Project
-		for project_url, emoji in PROJECT_TO_EMOJI.items():
-			if emoji in feature['name']:
-				project = f'{GITLAB_GROUP}/{project_url}'
-				break
-		labels = []
-
-		# DEPRECATED
-		if '🐛' in feature['name']:
-			labels.append('Bug')
-		if '💣' in feature['name']:
-			labels.append('SLA')
-		if '🚧' in feature['name']:
-			labels.append('Blocker')
-
-		# Get the value of the gitlab URL field in productboard
-		pb_gitlab_link = pb.get_gitlab_column_value(feature)
-
-		if pb_gitlab_link and pb_gitlab_link.get('text_value'):
-			# Issue exists, let's update it
-			issue_url = pb_gitlab_link['text_value']
-			click.echo(f"... feature already linked: {issue_url}")
-			issue_id = issue_url.split('/')[-1]
-
-			# Find project based on url instead of emoji
-			sub_project = issue_url.split('/')[-3]
-			project = f'{GITLAB_GROUP}/{sub_project}'
-
-			gitlab_project = gitlab_projects[project]
-			editable_issue = gitlab_project.issues.get(issue_id, lazy=True)
-			editable_issue.title = feature['name']
-			editable_issue.description = f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}"
-			editable_issue.milestone_id = gitlab_milestone.id
-			t_shirt = pb.get_estimate_column_value(feature)
-			if t_shirt:
-				editable_issue.weight = WEIGHTS[t_shirt]
-
-			try:
-				if not ctx.obj.get('dry_run', False):
-					editable_issue.save()
-				click.echo(f'... issue update -> {editable_issue.web_url}')
-			except gitlab.exceptions.GitlabUpdateError as e:
-				click.secho(f'Error updating issue : {e}', err=True, fg='red')
-
-		else:
-			click.echo(f'... creating issue in {project}')
-			gitlab_project = gitlab_projects[project]
-			issue_data = {
-				'title': feature['name'],
-				'description': f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}",
-				'milestone_id': gitlab_milestone.id,
-				'labels': labels,
-			}
-			t_shirt = pb.get_estimate_column_value(feature)
-			if t_shirt:
-				issue_data['weight'] = WEIGHTS[t_shirt]
-
-			if not ctx.obj.get('dry_run', False):
-				issue = gitlab_project.issues.create(issue_data)
-				issue.unsubscribe()
-				pb.update_feature_gitlab(feature, issue.web_url)
-				click.echo(f'... -> {issue.web_url}')
-			else:
-				click.echo(f'Dry run issue created {issue_data}')
-
-
 @from_productboard.command('to_github')
 @click.option('--username', envvar="PB_USERNAME")
 @click.option('--password', envvar="PB_PASSWORD")
@@ -384,7 +262,7 @@ def to_gitlab(ctx, username, password, token, release):
 @click.option('--release', envvar="RELEASE")
 @click.pass_context
 def to_github(ctx, username, password, token, release):
-	""" Create / Update Gitlab issues based on given Productboard Release """
+	""" Create / Update Github issues based on given Productboard Release """
 	pb = Productboard(username, password)
 	gh = Github(token)
 
@@ -394,7 +272,6 @@ def to_github(ctx, username, password, token, release):
 	if not productboard_release:
 		raise click.UsageError('No such release')
 
-	github_org = gh.get_organization(GITHUB_ORGANISATION)
 	github_projects = {f'{GITHUB_ORGANISATION}/{project}': gh.get_repo(f'{GITHUB_ORGANISATION}/{project}') for project in PROJECT_TO_EMOJI}
 
 	for feature in pb.features_by_release(productboard_release):
@@ -428,8 +305,8 @@ def to_github(ctx, username, password, token, release):
 			try:
 				if not ctx.obj.get('dry_run', False):
 					issue.edit(title=title, body=description)
-				click.echo(f'... issue update -> {issue.url}')
-			except gitlab.exceptions.GitlabUpdateError as e:
+				click.echo(f'... issue update -> {issue.html_url}')
+			except GithubException as e:
 				click.secho(f'Error updating issue : {e}', err=True, fg='red')
 
 		else:
@@ -441,22 +318,21 @@ def to_github(ctx, username, password, token, release):
 					title=feature['name'],
 					body=f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}",
 				)
-				pb.update_feature_gitlab(feature, issue.url)
-				click.echo(f'... -> {issue.url}')
+				pb.update_feature_gitlab(feature, issue.html_url)
+				click.echo(f'... -> {issue.html_url}')
 			else:
 				click.echo(f'Dry run issue created')
 
 
-@cli.group('from_gitlab', chain=True)
-@click.option('--token', envvar="GL_TOKEN")
-@click.option('--project', envvar="GL_PROJECT")
+@cli.group('from_github', chain=True)
+@click.option('--token', envvar="GH_TOKEN")
+@click.option('--project', envvar="GH_PROJECT")
 @click.option('--from-ref', envvar="FROM_REF")
 @click.option('--to-ref', envvar="TO_REF")
 @click.option('--status', envvar="STATUS")
-@click.option('--gitlab-issues', envvar="GL_ISSUES")
 @click.option('--dry-run', is_flag=True)
 @click.pass_context
-def group_from_gitlab(ctx, token, project, from_ref, to_ref, status, gitlab_issues, dry_run):
+def group_from_github(ctx, token, project, from_ref, to_ref, status, dry_run):
 	click.secho("Start setup", color="green", underline=True)
 
 	ctx.ensure_object(dict)
@@ -472,12 +348,13 @@ def group_from_gitlab(ctx, token, project, from_ref, to_ref, status, gitlab_issu
 	else:
 		ctx.obj['environment'] = 'Development'
 
-	ctx.obj['gl_client'] = EliumGitlab(GITLAB_URL, private_token=token)
-	ctx.obj['project'] = ctx.obj['gl_client'].projects.get(project)
+	ctx.obj['gh_client'] = Github(token)
+	ctx.obj['project'] = ctx.obj['gh_client'].get_repo(project)
 
 	if from_ref and to_ref and project:
-		ctx.obj['diff_link'] = ctx.obj['gl_client'].get_diff_link(project, from_ref, to_ref)
-		ctx.obj['commits'] = get_commits(ctx.obj['project'], from_ref, to_ref)
+		compare = ctx.obj['project'].compare(from_ref, to_ref)
+		ctx.obj['diff_link'] = compare.diff_url
+		ctx.obj['commits'] = compare.commits
 	else:
 		ctx.obj['commits'] = None
 		ctx.obj['diff_link'] = None
@@ -485,14 +362,12 @@ def group_from_gitlab(ctx, token, project, from_ref, to_ref, status, gitlab_issu
 	click.echo(f"Fetching Issues")
 
 	issues_names = []
-	if gitlab_issues:
-		issues_names = gitlab_issues.split()
-	ctx.obj['issues'] = get_issues_from_list_or_repo(ctx.obj['gl_client'], ctx.obj['project'], ctx.obj['commits'], issues_names=issues_names)
+	ctx.obj['issues'] = get_issues_from_gh_list_or_repo(ctx.obj['gh_client'], ctx.obj['project'], ctx.obj['commits'], issues_names=issues_names)
 
-	click.echo(f"{len(ctx.obj['issues'])} Gitlab Issues found")
+	click.echo(f"{len(ctx.obj['issues'])} GitHub Issues found")
 
 
-@group_from_gitlab.command('to_zendesk')
+@group_from_github.command('to_zendesk')
 @click.option('--zd-username', envvar="ZD_USERNAME")
 @click.option('--zd-password', envvar="ZD_PASSWORD")
 @click.pass_context
@@ -510,17 +385,17 @@ def to_zendesk(ctx, zd_username, zd_password):
 
 	# Find Zendesk issues in commit messages
 	for commit in ctx.obj['commits']:
-		click.echo(f"Processing: {commit['short_id']}")
-		zd_id_found = zd.get_ticket_ids_from_str(commit['message'])
+		click.echo(f"Processing: {commit.sha}")
+		zd_id_found = zd.get_ticket_ids_from_str(commit.commit.message)
 		zd_ticket_ids = zd_ticket_ids.union(zd_id_found)
 		if zd_id_found:
 			click.echo(f'Found {zd_id_found}')
 
 	# Find Zendesk issues ids
-	for gitlab_issue in ctx.obj['issues']:
+	for issue in ctx.obj['issues']:
 		# probably never more than 1 but let's be safe
-		click.echo(f'Processing: {gitlab_issue.title}')
-		zd_id_found = zd.get_ticket_ids_from_str(gitlab_issue.title)
+		click.echo(f'Processing: {issue.title}')
+		zd_id_found = zd.get_ticket_ids_from_str(issue.title)
 		zd_ticket_ids = zd_ticket_ids.union(zd_id_found)
 		if zd_id_found:
 			click.echo(f'Found {zd_id_found}')
@@ -533,7 +408,6 @@ def to_zendesk(ctx, zd_username, zd_password):
 	click.echo(f'Fetching tickets: {zd_ticket_ids}')
 
 	tickets = zd.get_tickets(zd_ticket_ids)
-
 	for ticket in tickets['tickets']:
 		payload = {
 			"ticket": {
@@ -568,7 +442,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 			click.echo(f'ZD update: {response.text}')
 
 
-@group_from_gitlab.command('to_productboard')
+@group_from_github.command('to_productboard')
 @click.option('--pb-username', envvar="PB_USERNAME")
 @click.option('--pb-password', envvar="PB_PASSWORD")
 @click.pass_context
@@ -584,8 +458,8 @@ def to_productboard(ctx, pb_username, pb_password):
 	new_status_id, new_status_label = pb.state_label(name=ctx.obj['status'])
 
 	for issue in ctx.obj['issues']:
-		click.echo(f"Processing: {issue.id} {issue.web_url}")
-		feature = pb.feature_by_gitlab_url(issue.web_url)
+		click.echo(f"Processing: {issue.id} {issue.html_url}")
+		feature = pb.feature_by_gitlab_url(issue.html_url)
 		if feature:
 			click.echo(f'feature {feature["id"]} found: {feature["name"]}')
 			old_status_id = feature['state_id']
@@ -601,7 +475,7 @@ def to_productboard(ctx, pb_username, pb_password):
 			click.echo(f'feature not found {issue.id}')
 
 
-@group_from_gitlab.command('to_slack')
+@group_from_github.command('to_slack')
 @click.option('--slack-url', envvar="SLACK_URL")
 @click.pass_context
 def to_slack(ctx, slack_url):
@@ -619,8 +493,7 @@ def to_slack(ctx, slack_url):
 	commits = ctx.obj['commits']
 	commits_titles = []
 	for commit in commits:
-		url = f"{ctx.obj['project'].web_url}/commit/{commit['id']}"
-		commits_titles.append(f"<{url}|{commit['short_id']}> {commit['title']}")
+		commits_titles.append(f"<{commit.html_url}|{commit.sha[0:7]}> {commit.commit.message}")
 	commits_str = '\n'.join(commits_titles)
 	payload = {
 		"attachments": [{
@@ -657,7 +530,7 @@ def to_slack(ctx, slack_url):
 		click.echo(json.dumps(payload))
 
 
-@group_from_gitlab.command('to_datadog')
+@group_from_github.command('to_datadog')
 @click.option('--datadog-key', envvar="DD_KEY")
 @click.pass_context
 def to_datadog(ctx, datadog_key):
@@ -680,6 +553,16 @@ def to_datadog(ctx, datadog_key):
 		result = requests.post(f"https://app.datadoghq.com/api/v1/events?api_key={datadog_key}", json=payload)
 		click.echo("->")
 		click.echo(result.text)
+
+
+@group_from_github.command('to_test')
+@click.pass_context
+def to_test(ctx):
+	click.secho('Sync to TEST', color="green", underline=True)
+	environment = ctx.obj['environment']
+	click.echo(f"syncing status {environment}")
+	for issue in ctx.obj['issues']:
+		click.echo(f'Found {issue.id}')
 
 
 if __name__ == '__main__':

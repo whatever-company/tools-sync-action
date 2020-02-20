@@ -6,7 +6,6 @@ authors = []
 
 [tool.poetry.dependencies]
 python = "^3.7"
-python-gitlab = "2.0.1"
 requests = {extras = ["security"], version = "2.22.0"}
 click = "^7.0"
 werkzeug = "1.0.0"
