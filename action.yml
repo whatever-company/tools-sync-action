@@ -1,0 +1,65 @@
+name: "Sync from github"
+description: "Take change from github and notify all other services"
+inputs:
+  from_ref:
+    description: "Starting commit"
+    required: true
+  to_ref:
+    description: "Ending commit"
+    required: true
+  status:
+    description: "Status of the deployement (Staging, Production, Development)"
+    default: "Development"
+    required: true
+  project:
+    description: "Path of the project (form of whatever-company/elium-web)"
+    required: true
+  # CREDS
+  github-token:
+    description: "github token needed for API calls"
+    required: true
+  datadog-key:
+    description: "Datadog API KEY to post MSG on deploy"
+    required: false
+  productboard-login:
+    description: "Productboard login to post MSG on deploy"
+    required: false
+  productboard-password:
+    description: "Productboard Password to post MSG on deploy"
+    required: false
+  slack-url:
+    description: "Slack Post URL to post MSG on deploy"
+    required: false
+  zendesk_username:
+    description: "Zendesk username to post MSG on deploy"
+    required: false
+  zendesk_password:
+    description: "Zendesk password to post MSG on deploy"
+    required: false
+outputs:
+  status:
+    description: "Log of status"
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - from_github
+    - to_productboard
+    - to_zendesk
+    - to_slack
+    - to_datadog
+  env:
+    FROM_REF: ${{ inputs.from_ref }}
+    TO_REF: ${{ inputs.to-ref }}
+    STATUS: ${{ inputs.status}}
+    GH_PROJECT: ${{ inputs.project}}
+    # RELEASE: NOT USED ATM
+
+    # CREDS
+    GH_TOKEN: ${{ inputs.github-token}}
+    DD_KEY: ${{ inputs.datadog-key}}
+    PB_USERNAME: ${{ inputs.productboard-login}}
+    PB_PASSWORD: ${{ inputs.productboard-password}}
+    SLACK_URL: ${{ inputs.slack-url}}
+    ZD_USERNAME: ${{ inputs.zendesk_username}}
+    ZD_PASSWORD: ${{ inputs.zendesk_password}}
