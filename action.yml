@@ -2,8 +2,8 @@ name: "Sync from github"
 description: "Take change from github and notify all other services"
 inputs:
   from_ref:
-    description: "Starting commit"
-    required: true
+    description: "Starting commit (if not passed, will use from_ref to derive to_ref based on semver)"
+    required: false
   to_ref:
     description: "Ending commit"
     required: true
@@ -14,6 +14,9 @@ inputs:
   project:
     description: "Path of the project (form of whatever-company/elium-web)"
     required: true
+  linear_release:
+    description: "true if all release are linear no two versions are released at the same time"
+    required: false
   # CREDS
   github-token:
     description: "github token needed for API calls"
@@ -53,6 +56,7 @@ runs:
     TO_REF: ${{ inputs.to-ref }}
     STATUS: ${{ inputs.status}}
     GH_PROJECT: ${{ inputs.project}}
+    LINEAR_RELEASE: ${{ inputs.linear_release}}
     # RELEASE: NOT USED ATM
 
     # CREDS

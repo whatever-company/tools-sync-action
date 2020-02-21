@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
+import json
 import re
 from uuid import uuid4
-import json
 
 import click
-from github import Github, GithubException
 import requests
+import semver
 from dotenv import load_dotenv
+from github import Github, GithubException
 from werkzeug.utils import cached_property
 
 # Load dot file as ENV
@@ -330,26 +331,46 @@ def to_github(ctx, username, password, token, release):
 @click.option('--from-ref', envvar="FROM_REF")
 @click.option('--to-ref', envvar="TO_REF")
 @click.option('--status', envvar="STATUS")
+@click.option('--linear', envvar="LINEAR_RELEASE", help="Staging is always further or eq than prod")
 @click.option('--dry-run', is_flag=True)
 @click.pass_context
-def group_from_github(ctx, token, project, from_ref, to_ref, status, dry_run):
+def group_from_github(ctx, token, project, from_ref, to_ref, status, linear, dry_run):
 	click.secho("Start setup", color="green", underline=True)
 
 	ctx.ensure_object(dict)
 	# pass down some var
 	ctx.obj['dry_run'] = dry_run
 
-	ctx.obj['from_ref'] = from_ref
+	ctx.obj['gh_client'] = Github(token)
+	ctx.obj['project'] = ctx.obj['gh_client'].get_repo(project)
+
 	ctx.obj['to_ref'] = to_ref
+	if not from_ref and to_ref.startswith("v"):
+		click.echo(f"Process preceding version of {to_ref}")
+		current_version = semver.parse_version_info(to_ref[1:])
+		tags = ctx.obj['project'].get_tags()
+		previous_version = semver.parse_version_info('0.0.0')
+		for git_tag in tags:
+			try:
+				tag_version = semver.parse_version_info(git_tag.name[1:])
+			except ValueError:
+				continue
+			if not linear:
+				if (current_version.prerelease and not tag_version.prerelease) or (not current_version.prerelease and tag_version.prerelease):
+					# only tag pre release toghether or release toghether
+					continue
+			if tag_version < current_version and tag_version > previous_version:
+				previous_version = tag_version
+		from_ref = f"v{previous_version}"
+		click.echo(f"Found from {from_ref}")
+
+	ctx.obj['from_ref'] = from_ref
 	ctx.obj['status'] = status
 
 	if status in PRODUCTBOARD_TO_ENV:
 		ctx.obj['environment'] = PRODUCTBOARD_TO_ENV[status]
 	else:
 		ctx.obj['environment'] = 'Development'
-
-	ctx.obj['gh_client'] = Github(token)
-	ctx.obj['project'] = ctx.obj['gh_client'].get_repo(project)
 
 	if from_ref and to_ref and project:
 		click.secho(f"From {from_ref} to {to_ref}", color="green")
