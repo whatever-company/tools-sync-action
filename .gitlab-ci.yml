@@ -7,7 +7,7 @@ cache:
 
 gitlab-to-pb:
   stage: build
-  image: python:3.6-alpine@sha256:1a345c0c5bcefad9423a40cb23659b361487ae3b216eb3789c91514952988623
+  image: python:3.6-alpine@sha256:546d79a1498f299ed2903d6ba0aceee86a1d5a519c096c807e1b186a8450ece1
   only:
     refs:
       - triggers
@@ -29,7 +29,7 @@ gitlab-to-pb:
 
 pb-to-gitlab:
   stage: build
-  image: python:3.6-alpine@sha256:1a345c0c5bcefad9423a40cb23659b361487ae3b216eb3789c91514952988623
+  image: python:3.6-alpine@sha256:546d79a1498f299ed2903d6ba0aceee86a1d5a519c096c807e1b186a8450ece1
   only:
     refs:
       - triggers
