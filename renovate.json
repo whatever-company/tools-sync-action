@@ -1,5 +1,5 @@
 {
   "extends": [
-    "gitlab>elium/infra/renovate-config"
+    "github>whatever-company/renovate-config"
   ]
 }
