@@ -336,6 +336,7 @@ def to_github(ctx, username, password, token, release):
 @click.pass_context
 def group_from_github(ctx, token, project, from_ref, to_ref, status, linear, dry_run):
 	click.secho("Start setup", color="green", underline=True)
+	click.echo(f'received from_ref={from_ref} to_ref={to_ref} status={status}')
 
 	ctx.ensure_object(dict)
 	# pass down some var
