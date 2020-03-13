@@ -457,7 +457,6 @@ def to_zendesk(ctx, zd_username, zd_password):
 
 		if environment == 'Production' and ticket['status'] not in ('closed', 'solved'):
 			payload['ticket']['status'] = 'open'
-			payload['ticket']['group_id'] = ZENDESK_CS_TEAM_ID
 
 		click.echo(f'syncing ticket {ticket["id"]}')
 		if not ctx.obj.get('dry_run', False):
