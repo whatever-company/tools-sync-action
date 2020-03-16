@@ -53,7 +53,7 @@ runs:
     - to_datadog
   env:
     FROM_REF: ${{ inputs.from_ref }}
-    TO_REF: ${{ inputs.to-ref }}
+    TO_REF: ${{ inputs.to_ref }}
     STATUS: ${{ inputs.status}}
     GH_PROJECT: ${{ inputs.project}}
     LINEAR_RELEASE: ${{ inputs.linear_release}}
