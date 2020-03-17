@@ -65,5 +65,5 @@ runs:
     PB_USERNAME: ${{ inputs.productboard-login}}
     PB_PASSWORD: ${{ inputs.productboard-password}}
     SLACK_URL: ${{ inputs.slack-url}}
-    ZD_USERNAME: ${{ inputs.zendesk_username}}
-    ZD_PASSWORD: ${{ inputs.zendesk_password}}
+    ZD_USERNAME: ${{ inputs.zendesk-username}}
+    ZD_PASSWORD: ${{ inputs.zendesk-password}}
