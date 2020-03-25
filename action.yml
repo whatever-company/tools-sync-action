@@ -1,19 +1,20 @@
 name: "Sync from github"
 description: "Take change from github and notify all other services"
+icon: zap
 inputs:
   from_ref:
     description: "Starting commit (if not passed, will use from_ref to derive to_ref based on semver)"
     required: false
   to_ref:
     description: "Ending commit"
-    required: true
+    required: fase
   status:
     description: "Status of the deployement (Staging, Production, Development)"
     default: "Development"
-    required: true
+    required: false
   project:
     description: "Path of the project (form of whatever-company/elium-web)"
-    required: true
+    required: false
   linear_release:
     description: "true if all release are linear no two versions are released at the same time"
     required: false
@@ -26,10 +27,10 @@ inputs:
     required: false
   productboard-login:
     description: "Productboard login to post MSG on deploy"
-    required: false
+    required: true
   productboard-password:
     description: "Productboard Password to post MSG on deploy"
-    required: false
+    required: true
   slack-url:
     description: "Slack Post URL to post MSG on deploy"
     required: false
@@ -45,12 +46,6 @@ outputs:
 runs:
   using: "docker"
   image: "Dockerfile"
-  args:
-    - from_github
-    - to_productboard
-    - to_zendesk
-    - to_slack
-    - to_datadog
   env:
     FROM_REF: ${{ inputs.from_ref }}
     TO_REF: ${{ inputs.to_ref }}

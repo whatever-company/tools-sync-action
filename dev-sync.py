@@ -100,7 +100,8 @@ class Productboard:
 	def all(self):
 		return self.session.get(f'{PRODUCTBOARD_URL}/api/all.json').json()
 
-	def get_release(self, name):
+	def get_release(self, name=None):
+		""" Fetch the release by name of the current in progress """
 		for release in self.all['releases']:
 			if (name and release['name'].lower() == name.lower()) or (not name and release['state'].lower() == 'in-progress'):
 				return release
