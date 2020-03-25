@@ -45,7 +45,7 @@ PRODUCTBOARD_TO_ENV = {
 PROJECT_TO_EMOJI = {
 	'elium-web': '⚛️',
 	'elium-backend': '⚙️',
-	'elium-mobile': '📞',
+	# 'elium-mobile': '📞',
 	'website': '🌍',
 	'learn': '📄',
 	# 'infra/...': '🏗',
@@ -273,6 +273,7 @@ def to_github(ctx, username, password, token, release):
 	productboard_release = pb.get_release(release)
 	if not productboard_release:
 		raise click.UsageError('No such release')
+	click.echo(f'Found release {productboard_release}')
 
 	github_projects = {f'{GITHUB_ORGANISATION}/{project}': gh.get_repo(f'{GITHUB_ORGANISATION}/{project}') for project in PROJECT_TO_EMOJI}
 
@@ -293,6 +294,9 @@ def to_github(ctx, username, password, token, release):
 			# Issue exists, let's update it
 			issue_url = pb_github_link['text_value']
 			click.echo(f"... feature already linked: {issue_url}")
+			if "gitlab.com" in issue_url:
+				click.secho('Skip Gitlab Issue sync', color="orange")
+				continue
 			issue_id = issue_url.split('/')[-1]
 
 			# Find project based on url instead of emoji
