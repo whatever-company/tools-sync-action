@@ -320,7 +320,7 @@ def to_github(ctx, username, password, token, release):
 			github_project = github_projects[project]
 
 			if not ctx.obj.get('dry_run', False):
-				issue = github_projects.create_issue(
+				issue = github_project.create_issue(
 					title=feature['name'],
 					body=f"{PRODUCTBOARD_FEATURE_URL}/{feature['id']}/detail\n\n{feature['description']}",
 				)
