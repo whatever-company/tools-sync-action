@@ -45,7 +45,7 @@ PRODUCTBOARD_TO_ENV = {
 PROJECT_TO_EMOJI = {
 	'elium-web': '⚛️',
 	'elium-backend': '⚙️',
-	# 'elium-mobile': '📞',
+	'elium-mobile': '📞',
 	'website': '🌍',
 	'learn': '📄',
 	# 'infra/...': '🏗',
