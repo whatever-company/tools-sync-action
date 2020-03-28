@@ -297,7 +297,7 @@ def to_github(ctx, username, password, token, release):
 			if "gitlab.com" in issue_url:
 				click.secho('Skip Gitlab Issue sync', color="orange")
 				continue
-			issue_id = issue_url.split('/')[-1]
+			issue_id = int(issue_url.split('/')[-1])
 
 			# Find project based on url instead of emoji
 			sub_project = issue_url.split('/')[-3]
