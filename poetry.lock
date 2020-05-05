@@ -211,7 +211,7 @@ description = "python code static checker"
 name = "pylint"
 optional = false
 python-versions = ">=3.5.*"
-version = "2.5.1"
+version = "2.5.2"
 
 [package.dependencies]
 astroid = ">=2.4.0,<=2.5"
@@ -348,7 +348,7 @@ python-versions = "*"
 version = "0.30.0"
 
 [metadata]
-content-hash = "c514c6c173524467f56874ba39bb8c3568328c2b85eaa68ed341cc58a4a4c430"
+content-hash = "9c5c5b7cef4fd8d5094fe38f81235c0df5a84504f8486af4c1d992e8266f4fda"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -491,8 +491,8 @@ pyjwt = [
     {file = "PyJWT-1.7.1.tar.gz", hash = "sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96"},
 ]
 pylint = [
-    {file = "pylint-2.5.1-py3-none-any.whl", hash = "sha256:357e30b0cce26b078e58a6a668afdee9b9a04bd25ec982691f2f95c26301e674"},
-    {file = "pylint-2.5.1.tar.gz", hash = "sha256:f1a99799b1748bc5241e9a6b5a518893b34e2fd6245460207dec71f46c0abc17"},
+    {file = "pylint-2.5.2-py3-none-any.whl", hash = "sha256:dd506acce0427e9e08fb87274bcaa953d38b50a58207170dbf5b36cf3e16957b"},
+    {file = "pylint-2.5.2.tar.gz", hash = "sha256:b95e31850f3af163c2283ed40432f053acbc8fc6eba6a069cb518d9dbf71848c"},
 ]
 pyopenssl = [
     {file = "pyOpenSSL-19.1.0-py2.py3-none-any.whl", hash = "sha256:621880965a720b8ece2f1b2f54ea2071966ab00e2970ad2ce11d596102063504"},
