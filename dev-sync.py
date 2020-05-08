@@ -19,7 +19,7 @@ PRODUCTBOARD_FEATURE_URL = f'{PRODUCTBOARD_URL}/feature-board/97842-backlog/feat
 ISSUE_RE = re.compile("#([0-9]+)")
 
 GITHUB_ORGANISATION = 'whatever-company'
-ZENDESK_TICKET_RE = re.compile("ZD-([0-9]+)")
+ZENDESK_TICKET_RE = re.compile("ZD-([0-9]+)", re.IGNORECASE)
 ZENDESK_URL = "https://knowledgeplaza.zendesk.com"
 ZENDESK_CS_TEAM_ID = 22392423
 ZENDESK_BUGS_TEAM_ID = 360003060151
@@ -386,7 +386,7 @@ def group_from_github(ctx, token, project, from_ref, to_ref, status, linear, dry
 	else:
 		ctx.obj['commits'] = []
 		ctx.obj['diff_link'] = None
-
+	print(ctx.obj['commits'])
 	click.echo(f"Fetching Issues")
 
 	issues_names = []
