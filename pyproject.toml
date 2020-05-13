@@ -11,7 +11,7 @@ click = "7.1.2"
 werkzeug = "1.0.1"
 python-dotenv = "0.13.0"
 PyGithub = "^1.46"
-semver = "2.10.0"
+semver = "==2.10.1"
 
 [tool.poetry.dev-dependencies]
 pylint = "2.5.2"
