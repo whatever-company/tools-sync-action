@@ -34,10 +34,10 @@ inputs:
   slack-url:
     description: "Slack Post URL to post MSG on deploy"
     required: false
-  zendesk_username:
+  zendesk-username:
     description: "Zendesk username to post MSG on deploy"
     required: false
-  zendesk_password:
+  zendesk-password:
     description: "Zendesk password to post MSG on deploy"
     required: false
 outputs:
