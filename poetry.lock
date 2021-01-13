@@ -182,15 +182,15 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "pygithub"
-version = "1.52"
+version = "1.54.1"
 description = "Use the full Github API v3"
 category = "main"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 
 [package.dependencies]
 deprecated = "*"
-pyjwt = "*"
+pyjwt = "<2.0"
 requests = ">=2.14.0"
 
 [package.extras]
@@ -359,7 +359,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "ac3c1c8af9d788b7d801d3cf96d09cf1b4a407fb982b82ab6666200ad89fe8b4"
+content-hash = "87dfb55118e4da1b6dee477e762ade359df1316fe92810e301e26cb731a9030f"
 
 [metadata.files]
 astroid = [
@@ -493,8 +493,8 @@ pyflakes = [
     {file = "pyflakes-2.2.0.tar.gz", hash = "sha256:35b2d75ee967ea93b55750aa9edbbf72813e06a66ba54438df2cfac9e3c27fc8"},
 ]
 pygithub = [
-    {file = "PyGithub-1.52-py3-none-any.whl", hash = "sha256:371d17e855a2fd7a9ea1a9c71fd1d5d3e805369b60ce21121dd2931e5fbfc4e7"},
-    {file = "PyGithub-1.52.tar.gz", hash = "sha256:fc11a182ca3d88dde6ab2fbbd07e3441685cc8b738f7813fcbfc18be28c1d8ed"},
+    {file = "PyGithub-1.54.1-py3-none-any.whl", hash = "sha256:87afd6a67ea582aa7533afdbf41635725f13d12581faed7e3e04b1579c0c0627"},
+    {file = "PyGithub-1.54.1.tar.gz", hash = "sha256:300bc16e62886ca6537b0830e8f516ea4bc3ef12d308e0c5aff8bdbd099173d4"},
 ]
 pyjwt = [
     {file = "PyJWT-1.7.1-py2.py3-none-any.whl", hash = "sha256:5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e"},
