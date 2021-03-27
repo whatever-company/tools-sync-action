@@ -244,8 +244,8 @@ test = ["flaky", "pretend", "pytest (>=3.0.1)"]
 
 [[package]]
 name = "python-dotenv"
-version = "0.15.0"
-description = "Add .env support to your django/flask apps in development and deployments"
+version = "0.16.0"
+description = "Read key-value pairs from a .env file and set them as environment variables"
 category = "main"
 optional = false
 python-versions = "*"
@@ -361,7 +361,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "20c7e267edf708a11eb2027ee0aef8181476a2bc9be875f70c883f16ad796b91"
+content-hash = "cd1dba19405ad77ae8df1b20914b8da522acaf0d3b892bcc1310fd5b7c9305bc"
 
 [metadata.files]
 astroid = [
@@ -511,8 +511,8 @@ pyopenssl = [
     {file = "pyOpenSSL-19.1.0.tar.gz", hash = "sha256:9a24494b2602aaf402be5c9e30a0b82d4a5c67528fe8fb475e3f3bc00dd69507"},
 ]
 python-dotenv = [
-    {file = "python-dotenv-0.15.0.tar.gz", hash = "sha256:587825ed60b1711daea4832cf37524dfd404325b7db5e25ebe88c495c9f807a0"},
-    {file = "python_dotenv-0.15.0-py2.py3-none-any.whl", hash = "sha256:0c8d1b80d1a1e91717ea7d526178e3882732420b03f08afea0406db6402e220e"},
+    {file = "python-dotenv-0.16.0.tar.gz", hash = "sha256:9fa413c37d4652d3fa02fea0ff465c384f5db75eab259c4fc5d0c5b8bf20edd4"},
+    {file = "python_dotenv-0.16.0-py2.py3-none-any.whl", hash = "sha256:31d752f5b748f4e292448c9a0cac6a08ed5e6f4cefab85044462dcad56905cec"},
 ]
 requests = [
     {file = "requests-2.25.1-py2.py3-none-any.whl", hash = "sha256:c210084e36a42ae6b9219e00e48287def368a26d03a048ddad7bfee44f75871e"},
