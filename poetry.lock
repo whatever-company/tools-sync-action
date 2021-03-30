@@ -210,7 +210,7 @@ test = ["pytest (>=4.0.1,<5.0.0)", "pytest-cov (>=2.6.0,<3.0.0)", "pytest-runner
 
 [[package]]
 name = "pylint"
-version = "2.7.3"
+version = "2.7.4"
 description = "python code static checker"
 category = "dev"
 optional = false
@@ -361,7 +361,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "315dd1ce4499ed1de7a5a52002c6490b0cd164c84379679573a971809e8f38df"
+content-hash = "f4860f7d7537d27682a89a6d18ba14d24b4e9cf4e586a1cccc8ceafc33f7ef4c"
 
 [metadata.files]
 astroid = [
@@ -503,8 +503,8 @@ pyjwt = [
     {file = "PyJWT-1.7.1.tar.gz", hash = "sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96"},
 ]
 pylint = [
-    {file = "pylint-2.7.3-py3-none-any.whl", hash = "sha256:d29e1140d96362eb0b68fa0fb1a6192532f586886d6c52db79872a906a50be58"},
-    {file = "pylint-2.7.3.tar.gz", hash = "sha256:466e067526b609c1f22b97895e2a64e5fc3d897016b91ef0f4f80480e89a1ef9"},
+    {file = "pylint-2.7.4-py3-none-any.whl", hash = "sha256:209d712ec870a0182df034ae19f347e725c1e615b2269519ab58a35b3fcbbe7a"},
+    {file = "pylint-2.7.4.tar.gz", hash = "sha256:bd38914c7731cdc518634a8d3c5585951302b6e2b6de60fbb3f7a0220e21eeee"},
 ]
 pyopenssl = [
     {file = "pyOpenSSL-19.1.0-py2.py3-none-any.whl", hash = "sha256:621880965a720b8ece2f1b2f54ea2071966ab00e2970ad2ce11d596102063504"},
