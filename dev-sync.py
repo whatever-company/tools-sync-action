@@ -27,6 +27,7 @@ ZENDESK_BUGS_TEAM_ID = 360003060151
 PRODUCTBOARD_STATUSES = [
 	'New idea',
 	'Need Product Work',
+	'Need Tech Work',
 	'Need Refinement',
 	'Blocked',
 	'Ready',
@@ -492,7 +493,7 @@ def to_productboard(ctx, pb_username, pb_password):
 			old_status_id = feature['state_id']
 			_, old_status_label = pb.state_label(state_id=old_status_id)
 
-			if PRODUCTBOARD_STATUSES.index(old_status_label) < PRODUCTBOARD_STATUSES.index(new_status_label):
+			if (not old_status_label) or (old_status_label not in PRODUCTBOARD_STATUSES) or (PRODUCTBOARD_STATUSES.index(old_status_label) < PRODUCTBOARD_STATUSES.index(new_status_label)):
 				if not ctx.obj.get('dry_run', False):
 					pb.update_feature_status(feature, new_status_id)
 				click.echo(f'Status updated')
