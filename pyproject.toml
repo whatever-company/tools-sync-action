@@ -10,7 +10,7 @@ requests = {extras = ["security"], version = "==2.25.1"}
 click = "7.1.2"
 werkzeug = "1.0.1"
 python-dotenv = "==0.17.1"
-PyGithub = "1.54.1"
+PyGithub = "==1.55"
 semver = "==2.13.0"
 
 [tool.poetry.dev-dependencies]
