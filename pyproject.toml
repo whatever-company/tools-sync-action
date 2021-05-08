@@ -15,7 +15,7 @@ semver = "==2.13.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "==2.8.2"
-flake8 = "==3.9.1"
+flake8 = "==3.9.2"
 yapf = "==0.31.0"
 
 [build-system]
