@@ -7,7 +7,7 @@ inputs:
     required: false
   to_ref:
     description: "Ending commit"
-    required: fase
+    required: false
   status:
     description: "Status of the deployement (Staging, Production, Development)"
     default: "Development"
