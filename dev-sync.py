@@ -286,7 +286,7 @@ def to_slack(ctx, slack_url):
 
 
 @group_from_github.command('to_datadog')
-@click.option('--datadog-key', envvar="DD_KEY")
+@click.option('--datadog-key', envvar="DD_API_KEY")
 @click.pass_context
 def to_datadog(ctx, datadog_key):
 	click.secho("Announcing release on datadog", color="green", underline=True)

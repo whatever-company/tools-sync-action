@@ -50,7 +50,7 @@ runs:
 
     # CREDS
     GH_TOKEN: ${{ inputs.github-token}}
-    DD_KEY: ${{ inputs.datadog-key}}
+    DD_API_KEY: ${{ inputs.datadog-key}}
     SLACK_URL: ${{ inputs.slack-url}}
     ZD_USERNAME: ${{ inputs.zendesk-username}}
     ZD_PASSWORD: ${{ inputs.zendesk-password}}
