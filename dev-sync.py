@@ -437,6 +437,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 	click.echo(f'Fetching tickets: {zd_ticket_ids}')
 
 	tickets = zd.get_tickets(zd_ticket_ids)
+	click.echo(f'tickets received from ZD: {tickets}')
 	for ticket in tickets['tickets']:
 		payload = {
 			"ticket": {
