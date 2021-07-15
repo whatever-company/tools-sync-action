@@ -579,7 +579,7 @@ def to_datadog(ctx, datadog_key):
 	}
 
 	if not ctx.obj.get('dry_run', False):
-		result = requests.post(f"https://app.datadoghq.com/api/v1/events?api_key={datadog_key}", json=payload)
+		result = requests.post(f"https://app.datadoghq.eu/api/v1/events?api_key={datadog_key}", json=payload)
 		click.echo("->")
 		click.echo(result.text)
 
