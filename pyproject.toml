@@ -9,7 +9,7 @@ python = "^3.7"
 requests = {extras = ["security"], version = "==2.26.0"}
 click = "7.1.2"
 werkzeug = "1.0.1"
-python-dotenv = "==0.18.0"
+python-dotenv = "==0.19.0"
 PyGithub = "==1.55"
 semver = "==2.13.0"
 
