@@ -206,7 +206,7 @@ tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
 
 [[package]]
 name = "pylint"
-version = "2.10.0"
+version = "2.10.1"
 description = "python code static checker"
 category = "dev"
 optional = false
@@ -361,7 +361,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "6d0d2acf5945695bf80a199c9b15625ef9403e3bb7a80862b3402c60aa1fcd1d"
+content-hash = "bfad68eeba244c4f6d2b2849a5480284aa3ef06ea781a8a668f1530cbec0971c"
 
 [metadata.files]
 appdirs = [
@@ -504,8 +504,8 @@ pyjwt = [
     {file = "PyJWT-2.1.0.tar.gz", hash = "sha256:fba44e7898bbca160a2b2b501f492824fc8382485d3a6f11ba5d0c1937ce6130"},
 ]
 pylint = [
-    {file = "pylint-2.10.0-py3-none-any.whl", hash = "sha256:2d01c6de5ea20443e3f7ed8ae285f75b2d4da92e840f10118ddb7da18a1e09df"},
-    {file = "pylint-2.10.0.tar.gz", hash = "sha256:dcf4a5dd7bc98c68790323f783d792423c1946e7a4a195e44d7b2c2d386f457d"},
+    {file = "pylint-2.10.1-py3-none-any.whl", hash = "sha256:9634fdcb0cb39d6b9f76bf716b374acae3a0f79a39872b1b3258764d091d57d6"},
+    {file = "pylint-2.10.1.tar.gz", hash = "sha256:9a699c8a5ecff651b2de6008f36cdffef95db9a9929a0559c3c3b9498b783897"},
 ]
 pynacl = [
     {file = "PyNaCl-1.4.0-cp27-cp27m-macosx_10_10_x86_64.whl", hash = "sha256:ea6841bc3a76fa4942ce00f3bda7d436fda21e2d91602b9e21b7ca9ecab8f3ff"},
