@@ -7,7 +7,7 @@ import click
 import requests
 import semver
 from dotenv import load_dotenv
-from github import Github, GithubException
+from github import Commit, Github, GithubException
 
 # Load dot file as ENV
 load_dotenv()
@@ -105,7 +105,7 @@ def cli():
 @click.option('--dry-run', is_flag=True)
 @click.pass_context
 def group_from_github(ctx, token, project, from_ref, to_ref, status, linear, dry_run):
-	click.secho("Start setup", color="green", underline=True)
+	click.secho("Start setup", fg="green", underline=True)
 	click.echo(f'received from_ref={from_ref} to_ref={to_ref} status={status}')
 
 	ctx.ensure_object(dict)
@@ -139,7 +139,7 @@ def group_from_github(ctx, token, project, from_ref, to_ref, status, linear, dry
 	ctx.obj['status'] = status
 
 	if from_ref and to_ref and project:
-		click.secho(f"From {from_ref} to {to_ref}", color="green")
+		click.secho(f"From {from_ref} to {to_ref}", fg="green")
 		compare = ctx.obj['project'].compare(from_ref, to_ref)
 		ctx.obj['diff_link'] = compare.diff_url
 		ctx.obj['commits'] = compare.commits or []
@@ -147,7 +147,7 @@ def group_from_github(ctx, token, project, from_ref, to_ref, status, linear, dry
 		ctx.obj['commits'] = []
 		ctx.obj['diff_link'] = None
 	print(ctx.obj['commits'])
-	click.echo(f"Fetching Issues")
+	click.echo("Fetching Issues")
 
 	issues_names = []
 	ctx.obj['issues'] = get_issues_from_gh_list_or_repo(ctx.obj['gh_client'], ctx.obj['project'], ctx.obj['commits'], issues_names=issues_names)
@@ -160,7 +160,7 @@ def group_from_github(ctx, token, project, from_ref, to_ref, status, linear, dry
 @click.option('--zd-password', envvar="ZD_PASSWORD")
 @click.pass_context
 def to_zendesk(ctx, zd_username, zd_password):
-	click.secho('Sync to Zendesk', color="green", underline=True)
+	click.secho('Sync to Zendesk', fg="green", underline=True)
 	status = ctx.obj['status']
 
 	if status not in ('production', 'staging', 'development'):
@@ -170,23 +170,25 @@ def to_zendesk(ctx, zd_username, zd_password):
 	zd = Zendesk(zd_username, zd_password)
 
 	zd_ticket_ids = set()
+	issue_to_commit: dict[int, Commit.Commit] = {}
 
 	# Find Zendesk issues in commit messages
 	for commit in ctx.obj['commits']:
 		click.echo(f"Processing: {commit.sha}")
-		zd_id_found = zd.get_ticket_ids_from_str(commit.commit.message)
-		zd_ticket_ids = zd_ticket_ids.union(zd_id_found)
-		if zd_id_found:
-			click.echo(f'Found {zd_id_found}')
-
+		zd_ids_found = zd.get_ticket_ids_from_str(commit.commit.message)
+		zd_ticket_ids = zd_ticket_ids.union(zd_ids_found)
+		if zd_ids_found:
+			click.echo(f'Found {zd_ids_found}')
+			for zd_id in zd_ids_found:
+				issue_to_commit[zd_id] = commit
 	# Find Zendesk issues ids
 	for issue in ctx.obj['issues']:
 		# probably never more than 1 but let's be safe
 		click.echo(f'Processing: {issue.title}')
-		zd_id_found = zd.get_ticket_ids_from_str(issue.title)
-		zd_ticket_ids = zd_ticket_ids.union(zd_id_found)
-		if zd_id_found:
-			click.echo(f'Found {zd_id_found}')
+		zd_ids_found = zd.get_ticket_ids_from_str(issue.title)
+		zd_ticket_ids = zd_ticket_ids.union(zd_ids_found)
+		if zd_ids_found:
+			click.echo(f'Found {zd_ids_found}')
 
 	# Update zendesk only for given stages
 	if not zd_ticket_ids:
@@ -197,12 +199,17 @@ def to_zendesk(ctx, zd_username, zd_password):
 
 	tickets = zd.get_tickets(zd_ticket_ids)
 	click.echo(f'tickets received from ZD: {tickets}')
+	if 'tickets' not in tickets:
+		return
 	for ticket in tickets['tickets']:
+		commit = issue_to_commit.get(ticket['id'])
 		payload = {
 			"ticket": {
 				"additional_tags": f"deployed-in-{status}",
 				"comment": {
-					"body": f"A fix was released in {status}",
+					"html_body": f"""A fix was released in {status}<br />
+					<a href="{commit.html_url}" target="_blank">{commit.sha[0:7]}</a>
+					""",
 					"public": False
 				},
 			}
@@ -234,7 +241,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 @click.option('--slack-url', envvar="SLACK_URL")
 @click.pass_context
 def to_slack(ctx, slack_url):
-	click.secho("Announcing release on slack", color="green", underline=True)
+	click.secho("Announcing release on slack", fg="green", underline=True)
 	status = ctx.obj['status']
 	project_name = ctx.obj['project'].name
 	project_icon = PROJECT_TO_EMOJI[project_name] if project_name in PROJECT_TO_EMOJI else ''
@@ -289,7 +296,7 @@ def to_slack(ctx, slack_url):
 @click.option('--datadog-key', envvar="DD_API_KEY")
 @click.pass_context
 def to_datadog(ctx, datadog_key):
-	click.secho("Announcing release on datadog", color="green", underline=True)
+	click.secho("Announcing release on datadog", fg="green", underline=True)
 
 	diff_link = ctx.obj['diff_link']
 	to_ref = ctx.obj['to_ref']
@@ -313,7 +320,7 @@ def to_datadog(ctx, datadog_key):
 @group_from_github.command('to_test')
 @click.pass_context
 def to_test(ctx):
-	click.secho('Sync to TEST', color="green", underline=True)
+	click.secho('Sync to TEST', fg="green", underline=True)
 	status = ctx.obj['status']
 	click.echo(f"syncing status {status}")
 	for issue in ctx.obj['issues']:
