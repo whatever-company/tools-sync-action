@@ -170,7 +170,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 	zd = Zendesk(zd_username, zd_password)
 
 	zd_ticket_ids = set()
-	issue_to_commit: dict[int, Commit.Commit] = {}
+	issue_to_commit: dict[str, Commit.Commit] = {}
 
 	# Find Zendesk issues in commit messages
 	for commit in ctx.obj['commits']:
@@ -181,6 +181,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 			click.echo(f'Found {zd_ids_found}')
 			for zd_id in zd_ids_found:
 				issue_to_commit[zd_id] = commit
+
 	# Find Zendesk issues ids
 	for issue in ctx.obj['issues']:
 		# probably never more than 1 but let's be safe
@@ -202,7 +203,7 @@ def to_zendesk(ctx, zd_username, zd_password):
 	if 'tickets' not in tickets:
 		return
 	for ticket in tickets['tickets']:
-		commit = issue_to_commit.get(ticket['id'])
+		commit = issue_to_commit.get(str(ticket['id']))
 		payload = {
 			"ticket": {
 				"additional_tags": f"deployed-in-{status}",
