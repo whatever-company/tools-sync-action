@@ -1,4 +1,4 @@
-FROM python:3.10-buster@sha256:dff69d84da8029266627b47d3f815d189de7179bc921c796b5a4d14302a795b4
+FROM python:3.10-buster@sha256:ff9e5ad6890a4919182f0a87e9d787b99b7c7328643134e5e10b568f0690c9a3
 
 RUN pip install poetry==1.0.3
 
