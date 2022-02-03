@@ -141,7 +141,7 @@ def group_from_github(ctx, token, project, from_ref, to_ref, status, linear, dry
 	if from_ref and to_ref and project:
 		click.secho(f"From {from_ref} to {to_ref}", fg="green")
 		compare = ctx.obj['project'].compare(from_ref, to_ref)
-		ctx.obj['diff_link'] = compare.diff_url
+		ctx.obj['diff_link'] = compare.html_url
 		ctx.obj['commits'] = compare.commits or []
 	else:
 		ctx.obj['commits'] = []
