@@ -8,7 +8,7 @@ authors = []
 python = "^3.7"
 requests = {extras = ["security"], version = "==2.27.1"}
 click = "==8.1.2"
-werkzeug = "==2.1.0"
+werkzeug = "==2.1.1"
 python-dotenv = "==0.20.0"
 PyGithub = "==1.55"
 semver = "==2.13.0"
