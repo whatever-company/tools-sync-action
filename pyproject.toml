@@ -14,7 +14,7 @@ PyGithub = "==1.55"
 semver = "==2.13.0"
 
 [tool.poetry.dev-dependencies]
-pylint = "==2.13.7"
+pylint = "==2.13.8"
 flake8 = "==4.0.1"
 yapf = "==0.32.0"
 
