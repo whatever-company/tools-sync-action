@@ -16,7 +16,7 @@ semver = "==2.13.0"
 [tool.poetry.dev-dependencies]
 flake8 = "==5.0.4"
 yapf = "==0.32.0"
-pylint = "==2.15.0"
+pylint = "==2.15.2"
 
 [build-system]
 requires = ["poetry>=0.12"]
