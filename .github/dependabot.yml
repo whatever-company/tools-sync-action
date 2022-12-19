@@ -1,0 +1,36 @@
+version: 2
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "07:00"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "07:00"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 30
+    commit-message:
+      prefix: "deps"
+      prefix-development: "chore"
+      include: "scope"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "07:00"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      include: "scope"
