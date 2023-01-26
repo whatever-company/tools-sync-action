@@ -49,7 +49,7 @@ runs:
       run: pipx install poetry
     - run: poetry install -C ${{github.action_path}} --only main
       shell: bash
-    - run: poetry run -C ${{github.action_path}} python dev-sync.py from_github to_zendesk to_slack to_datadog
+    - run: poetry run -C ${{github.action_path}} python ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack to_datadog
       shell: bash
       env:
         FROM_REF: ${{ inputs.from_ref }}
