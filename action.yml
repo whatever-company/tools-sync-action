@@ -38,19 +38,26 @@ outputs:
   status:
     description: "Log of status"
 runs:
-  using: "docker"
-  image: "Dockerfile"
-  env:
-    FROM_REF: ${{ inputs.from_ref }}
-    TO_REF: ${{ inputs.to_ref }}
-    STATUS: ${{ inputs.status}}
-    GH_PROJECT: ${{ inputs.project}}
-    LINEAR_RELEASE: ${{ inputs.linear_release}}
-    # RELEASE: NOT USED ATM
+  using: "composite"
+  steps:
+    - name: Install Python
+      uses: actions/setup-python@v4
+      with:
+        cache: poetry
+        python-version: "3.10"
+    - run: poetry install --only main
+    - run: python dev-sync.py from_github to_zendesk to_slack to_datadog
+      env:
+        FROM_REF: ${{ inputs.from_ref }}
+        TO_REF: ${{ inputs.to_ref }}
+        STATUS: ${{ inputs.status}}
+        GH_PROJECT: ${{ inputs.project}}
+        LINEAR_RELEASE: ${{ inputs.linear_release}}
+        # RELEASE: NOT USED ATM
 
-    # CREDS
-    GH_TOKEN: ${{ inputs.github-token}}
-    DD_API_KEY: ${{ inputs.datadog-key}}
-    SLACK_URL: ${{ inputs.slack-url}}
-    ZD_USERNAME: ${{ inputs.zendesk-username}}
-    ZD_PASSWORD: ${{ inputs.zendesk-password}}
+        # CREDS
+        GH_TOKEN: ${{ inputs.github-token}}
+        DD_API_KEY: ${{ inputs.datadog-key}}
+        SLACK_URL: ${{ inputs.slack-url}}
+        ZD_USERNAME: ${{ inputs.zendesk-username}}
+        ZD_PASSWORD: ${{ inputs.zendesk-password}}
