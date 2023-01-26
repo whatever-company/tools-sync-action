@@ -44,9 +44,11 @@ runs:
       uses: actions/setup-python@v4
       with:
         python-version: "3.10"
-    - run: cd ${{github.action_path}}; poetry install --only main
+    - name: Install poetry
+      run: pipx install poetry
+    - run: poetry install -C ${{github.action_path}} --only main
       shell: bash
-    - run: cd ${{github.action_path}}; poetry run python dev-sync.py from_github to_zendesk to_slack to_datadog
+    - run: poetry run -C ${{github.action_path}} python dev-sync.py from_github to_zendesk to_slack to_datadog
       shell: bash
       env:
         FROM_REF: ${{ inputs.from_ref }}
