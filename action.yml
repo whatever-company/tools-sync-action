@@ -46,7 +46,9 @@ runs:
         cache: poetry
         python-version: "3.10"
     - run: poetry install --only main
+      shell: bash
     - run: python dev-sync.py from_github to_zendesk to_slack to_datadog
+      shell: bash
       env:
         FROM_REF: ${{ inputs.from_ref }}
         TO_REF: ${{ inputs.to_ref }}
