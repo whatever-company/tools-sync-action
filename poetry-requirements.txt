@@ -1,2 +1,2 @@
 poetry==1.4.0
-virtualenv==20.19.0
+virtualenv==20.20.0
