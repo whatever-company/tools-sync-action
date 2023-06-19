@@ -1,4 +1,4 @@
-FROM python:3.11-buster@sha256:15f1f5aa70d4a0f28013d68f3f99cd786d3ae179d64e93d8fcc5fbcfe70661b8
+FROM python:3.11-buster@sha256:3a19b4d6ce4402d11bb19aa11416e4a262a60a57707a5cda5787a81285df2666
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install poetry and virtualenv
