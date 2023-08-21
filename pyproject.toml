@@ -14,7 +14,7 @@ PyGithub = "==1.58.2"
 semver = "==3.0.1"
 
 [tool.poetry.dev-dependencies]
-flake8 = "==6.0.0"
+flake8 = "==6.1.0"
 black = "==23.7.0"
 bandit = "==1.7.5"
 flake8-annotations = "==3.0.1"
