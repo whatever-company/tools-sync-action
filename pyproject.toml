@@ -7,7 +7,7 @@ authors = []
 [tool.poetry.dependencies]
 python = "~3.11"
 requests = {extras = ["security"], version = "==2.31.0"}
-click = "==8.1.6"
+click = "==8.1.7"
 werkzeug = "==2.3.6"
 python-dotenv = "==1.0.0"
 PyGithub = "==1.58.2"
