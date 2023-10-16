@@ -11,7 +11,7 @@ click = "==8.1.7"
 werkzeug = "==3.0.0"
 python-dotenv = "==1.0.0"
 PyGithub = "==1.58.2"
-semver = "==3.0.1"
+semver = "==3.0.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "==6.1.0"
