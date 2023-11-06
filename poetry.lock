@@ -381,13 +381,13 @@ test = ["flake8-docstrings"]
 
 [[package]]
 name = "flake8-sfs"
-version = "0.0.4"
+version = "1.0.0"
 description = "Python String Formatting Style (SFS) plugin for flake8"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "flake8-sfs-0.0.4.tar.gz", hash = "sha256:81414c8041531e173f3285f2c0552b8e25aaf3b973e17ea33c3b0719385c93b8"},
-    {file = "flake8_sfs-0.0.4-py2.py3-none-any.whl", hash = "sha256:0e10a363184aee3280643b76d4ae2109a7de7b51d8e3018a673138e8a9d2bc4e"},
+    {file = "flake8-sfs-1.0.0.tar.gz", hash = "sha256:fc33279ff397f1bfc7e8f16c1921264290178f4b1f07464cc2b8d8a98cde11fc"},
+    {file = "flake8_sfs-1.0.0-py2.py3-none-any.whl", hash = "sha256:1745af5017e17728be77f1ccac842efb2bf93e63f2c010dce01bd9e2a1904789"},
 ]
 
 [package.dependencies]
@@ -984,4 +984,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "49cf55d00a61c38c0543429ceb9a621a4c5978b4a270093ffa94e20c43f52233"
+content-hash = "53e8443275f5b7df050b4a7a6321b5bb3a937f3f442ab512799695a20b6a0d38"
