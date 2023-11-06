@@ -1,2 +1,2 @@
-poetry==1.6.1
+poetry==1.7.0
 virtualenv==20.24.6
