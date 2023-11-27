@@ -1,2 +1,2 @@
 poetry==1.7.1
-virtualenv==20.24.6
+virtualenv==20.24.7
