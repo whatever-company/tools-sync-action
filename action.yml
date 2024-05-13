@@ -43,13 +43,18 @@ runs:
     - name: Install Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: "3.12"
+
     - name: Install poetry
       shell: bash
-      run: pipx install poetry
-    - run: poetry install -C ${{github.action_path}} --only main
+      run: pip install poetry -r ${{github.action_path}}/poetry-requirements.txt
+
+    - name: Install dependencies
       shell: bash
-    - run: poetry run -C ${{github.action_path}} python ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack to_datadog
+      run: poetry install -C ${{github.action_path}} --only main
+
+    - name: Run dev-sync script
+      run: poetry run -C ${{github.action_path}} python ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack to_datadog
       shell: bash
       env:
         FROM_REF: ${{ inputs.from_ref }}
