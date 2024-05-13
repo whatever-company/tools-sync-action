@@ -1,8 +1,0 @@
-[flake8]
-select = B,S,E,F,W,C,G,NQA,ANN,B950,B902,B903
-extend-ignore = W503,W504,SFS3,E203,E501,S101,E402,ANN101,ANN102,ANN204,ANN401,B950,B902,B903
-max-line-length = 120
-noqa-require-code = true
-exclude = .git,__pycache__
-allow-untyped-defs = false
-mypy-init-return = true

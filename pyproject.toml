@@ -1,88 +1,68 @@
 [tool.poetry]
-name = "dev-sync"
-version = "0.1.0"
-description = "Sync between different tools dev are using (ZenDesk, Slack, Datadog, ...)"
-authors = []
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "~3.11"
-requests = {extras = ["security"], version = "==2.31.0"}
+python = ">= 3.12, < 3.13"
+requests = { extras = ["security"], version = "==2.31.0" }
 click = "==8.1.7"
 werkzeug = "==3.0.3"
 python-dotenv = "==1.0.1"
-PyGithub = "==1.58.2"
+PyGithub = "==2.3.0"
 semver = "==3.0.2"
 
 [tool.poetry.dev-dependencies]
-flake8 = "==7.0.0"
-black = "==24.4.2"
-bandit = "==1.7.8"
-flake8-annotations = "==3.1.0"
-flake8-bandit = "==4.1.1"
-flake8-bugbear = "==24.4.26"
-flake8-comprehensions = "==3.14.0"
-flake8-logging-format = "0.9.0"
-flake8-noqa = "==1.4.0"
-flake8-sfs = "==1.0.0"
-isort = "==5.13.2"
+ruff = "0.4.4"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ['py311']
+target-version = "py312"
 
-[tool.isort]
-line_length=120
-skip_gitignore=true
-profile="black"
-add_imports=["from __future__ import annotations"]
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+ignore = [
+    # Conflicting with formatting
+    "COM812", # Missing ending comma, conflicts with black magic trailing comma
+    "ISC001", # Conflicts with ruff format command
+    # Disabled rulesets we don't care about those
+    "BLE",    # Blind exception catching
+    "C90",    # Complexity
+    "D1",     # missing docstrings
+    "D211",
+    "D213",
+    "ANN101", # Annotations for self
+    "ANN102", # Annotations for cls
+    "ANN204", # Return annotations for special methods
+    "ANN401", # Forbid Any
+    "N801",
+    "N802",
+    "N803",
+    "N805",
+    "N806",
+    "N811",
+    "N812",
+    "N814",
+    "N815",
+    "N816",
+    "N818",
+    "N999",   # Various naming conventions around case
+    "PLR09",  # Too many arguments
+    "S101",   # Use of assert ..
+]
+select = ["ALL"]
 
 [tool.pyright]
-useLibraryCodeForTypes=true
-reportDuplicateImport=true
-reportUntypedNamedTuple=true
-reportUnnecessaryIsInstance=true
-reportUnnecessaryCast=true
-reportUnnecessaryComparison=true
-reportUnnecessaryTypeIgnoreComment=true
-reportImplicitStringConcatenation=true
-reportMatchNotExhaustive=true
-reportWildcardImportFromLibrary=true
-reportConstantRedefinition=true
-reportOverlappingOverload=true
-reportUnusedClass=true
-reportInvalidStubStatement=true
-reportIncompleteStub=true
-reportUnusedExpression=true
-reportCallInDefaultInitializer=true
-strictListInference=true
-strictSetInference=true
-reportMissingParameterType=true
-reportUntypedClassDecorator=true
-reportUntypedBaseClass=true
-reportUnusedFunction=true
-reportUntypedFunctionDecorator=true
-reportUnusedVariable=true
-reportInconsistentConstructor=true
-reportMissingTypeArgument=true
-reportUnusedImport=true
-reportUnnecessaryContains=true
-reportShadowedImport=true
-reportSelfClsParameterName=true
-reportFunctionMemberAccess=true
-reportUnknownParameterType=true
-strictDictionaryInference=true
-reportPrivateUsage=true
-reportPropertyTypeMismatch=true
-reportImportCycles="information"
-reportIncompatibleMethodOverride=true
-reportIncompatibleVariableOverride=true
-reportUninitializedInstanceVariable=true
-reportUnknownLambdaType=true
+typeCheckingMode = "strict"
 
-reportMissingSuperCall=false
-reportUnknownArgumentType=false
-reportUnknownVariableType=false
-reportUnknownMemberType=false
+deprecateTypingAliases = true
+reportCallInDefaultInitializer = true
+reportImplicitOverride = true
+reportImplicitStringConcatenation = true
+reportPropertyTypeMismatch = true
+reportUnnecessaryTypeIgnoreComment = true
+reportShadowedImports = true
+reportMissingTypeStubs = false
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

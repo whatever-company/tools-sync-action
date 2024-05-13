@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
+import contextlib
 import json
 import re
+from collections.abc import Iterable
 from typing import Any, Literal, TypedDict, cast
 
 import click
 import requests
 import semver
 from dotenv import load_dotenv
-from github import Commit, Github, GithubException, Project, Issue
+from github import Commit, Github, GithubException, Issue, Repository
 
 # Load dot file as ENV
 load_dotenv()
@@ -31,17 +33,15 @@ PROJECT_TO_EMOJI = {
 }
 
 
-def get_issues_from_commits(project: Project.Project, commits: list[Commit.Commit]) -> list[Issue.Issue]:
+def get_issues_from_commits(project: Repository.Repository, commits: list[Commit.Commit]) -> list[Issue.Issue]:
     issues_ids: set[str] = set()
     for commit in commits:
         match = ISSUE_RE.findall(commit.commit.message)
         issues_ids = issues_ids.union(set(match))
     issues: list[Issue.Issue] = []
     for i in issues_ids:
-        try:
+        with contextlib.suppress(GithubException):
             issues.append(project.get_issue(int(i)))
-        except GithubException:
-            pass
     return issues
 
 
@@ -56,23 +56,23 @@ class Zendesk:
         self.username = username
         self.password = password
 
-    def update_tickets(self, ids: list[int], payload: dict[str, Any]) -> requests.Response:
+    def update_tickets(self, ids: list[str], payload: dict[str, Any]) -> requests.Response:
         # https://developer.zendesk.com/rest_api/docs/support/tickets#request-body
 
-        response = requests.put(
+        return requests.put(
             f"{ZENDESK_URL}/api/v2/tickets/update_many.json",
             params={"ids": ",".join(ids)},
             json=payload,
             auth=(self.username, self.password),
+            timeout=10,
         )
 
-        return response
-
-    def get_tickets(self, ids: list[int]) -> list[ZendeskTicket] | None:
+    def get_tickets(self, ids: Iterable[str]) -> list[ZendeskTicket] | None:
         tickets = requests.get(
             f"{ZENDESK_URL}/api/v2/tickets/show_many.json",
             params={"ids": ",".join(ids)},
             auth=(self.username, self.password),
+            timeout=10,
         ).json()
 
         click.echo(f"tickets received from ZD: {tickets}")
@@ -84,42 +84,18 @@ class Zendesk:
         return ZENDESK_TICKET_RE.findall(text)
 
 
-def get_issues_from_gh_list_or_repo(
-    github_client: Github, project: Project.Project, commits: list[Commit.Commit], issues_names: list[str]
-) -> list[Issue.Issue]:
-    """Fetch issues using Github's commits messages or
-    the provided issues_names list using the format : whatever-company/elium-backend/issues/352
-
-    return a list of github issues object
-    """
-
-    issues_objects: list[Issue.Issue] = []
-    # Find Issues using Repo
-    if commits:
-        issues_from_commits = get_issues_from_commits(project, commits)
-        issues_objects = issues_objects + issues_from_commits
-
-    if issues_names:
-        # Find Issues usings CLI param
-        for issue_id in issues_names:
-            issues_objects.append(github_client.get_issue_from_url(issue_id))
-
-    return issues_objects
-
-
 @click.group()
 def cli() -> None:
     pass
 
 
-class ContextObj(TypedDict, total=False):
+class ContextObj(TypedDict):
     dry_run: bool
-    gh_client: Github
-    project: Project.Project
+    repository: Repository.Repository
     to_ref: str
     from_ref: str
     status: str
-    diff_link: str
+    diff_link: str | None
     commits: list[Commit.Commit]
     issues: list[Issue.Issue]
 
@@ -139,9 +115,9 @@ def group_from_github(
     project: str,
     from_ref: str,
     to_ref: str,
-    status: Literal["production", "staging", "decelopment"],
-    linear: bool,
-    dry_run: bool,
+    status: Literal["production", "staging", "development"],
+    linear: bool,  # noqa: FBT001
+    dry_run: bool,  # noqa: FBT001
 ) -> None:
     click.secho("Start setup", fg="green", underline=True)
     click.echo(f"received from_ref={from_ref} to_ref={to_ref} status={status}")
@@ -152,26 +128,26 @@ def group_from_github(
     # pass down some var
     ctx_obj["dry_run"] = dry_run
 
-    ctx_obj["gh_client"] = Github(token)
-    ctx_obj["project"] = ctx_obj["gh_client"].get_repo(project)
+    gh_client = Github(token)
+    ctx_obj["repository"] = gh_client.get_repo(project)
 
     ctx_obj["to_ref"] = to_ref
     if not from_ref and to_ref.startswith("v"):
         click.echo(f"Process preceding version of {to_ref}")
         current_version = semver.parse_version_info(to_ref[1:])
-        tags = ctx_obj["project"].get_tags()
+        tags = ctx_obj["repository"].get_tags()
         previous_version = semver.parse_version_info("0.0.0")
         for git_tag in tags:
             try:
                 tag_version = semver.parse_version_info(git_tag.name[1:])
             except ValueError:
                 continue
-            if not linear:
-                if (current_version.prerelease and not tag_version.prerelease) or (
-                    not current_version.prerelease and tag_version.prerelease
-                ):
-                    # only tag pre release toghether or release toghether
-                    continue
+            if not linear and (
+                (current_version.prerelease and not tag_version.prerelease)
+                or (not current_version.prerelease and tag_version.prerelease)
+            ):
+                # only tag pre release toghether or release toghether
+                continue
             if tag_version < current_version and tag_version > previous_version:
                 previous_version = tag_version
         from_ref = f"v{previous_version}"
@@ -182,19 +158,16 @@ def group_from_github(
 
     if from_ref and to_ref and project:
         click.secho(f"From {from_ref} to {to_ref}", fg="green")
-        compare = ctx_obj["project"].compare(from_ref, to_ref)
+        compare = ctx_obj["repository"].compare(from_ref, to_ref)
         ctx_obj["diff_link"] = compare.html_url
-        ctx_obj["commits"] = compare.commits or []
+        ctx_obj["commits"] = list(compare.commits)
     else:
         ctx_obj["commits"] = []
         ctx_obj["diff_link"] = None
-    print(ctx_obj["commits"])
+    click.echo(ctx_obj["commits"])
     click.echo("Fetching Issues")
 
-    issues_names = []
-    ctx_obj["issues"] = get_issues_from_gh_list_or_repo(
-        ctx_obj["gh_client"], ctx_obj["project"], ctx_obj["commits"], issues_names=issues_names
-    )
+    ctx_obj["issues"] = get_issues_from_commits(ctx_obj["repository"], ctx_obj["commits"])
 
     click.echo(f"{len(ctx_obj['issues'])} GitHub Issues found")
 
@@ -244,8 +217,9 @@ def to_zendesk(ctx: click.Context, zd_username: str, zd_password: str) -> None:
     click.echo(f"Fetching tickets: {zd_ticket_ids}")
 
     tickets = zd.get_tickets(zd_ticket_ids)
-    for ticket in tickets:
+    for ticket in tickets or []:
         commit = issue_to_commit.get(str(ticket["id"]))
+        assert commit is not None
         payload = {
             "ticket": {
                 "additional_tags": f"deployed-in-{status}",
@@ -275,7 +249,7 @@ def to_zendesk(ctx: click.Context, zd_username: str, zd_password: str) -> None:
             payload["ticket"]["status"] = "open"
 
         click.echo(f'syncing ticket {ticket["id"]}')
-        if not ctx_obj.get("dry_run", False):
+        if not ctx_obj["dry_run"]:
             response = zd.update_tickets([str(ticket["id"])], payload)
             click.echo(f"ZD update: {response.text}")
 
@@ -287,8 +261,8 @@ def to_slack(ctx: click.Context, slack_url: str) -> None:
     click.secho("Announcing release on slack", fg="green", underline=True)
     ctx_obj = cast(ContextObj, ctx.obj)
     status = ctx_obj["status"]
-    project_name = ctx_obj["project"].name
-    project_icon = PROJECT_TO_EMOJI[project_name] if project_name in PROJECT_TO_EMOJI else ""
+    project_name = ctx_obj["repository"].name
+    project_icon = PROJECT_TO_EMOJI.get(project_name, "")
     if status not in ("production", "staging"):
         click.echo("Announcing only prod/staging release")
         return
@@ -297,9 +271,7 @@ def to_slack(ctx: click.Context, slack_url: str) -> None:
     from_ref = ctx_obj["from_ref"]
     to_ref = ctx_obj["to_ref"]
     commits = ctx_obj["commits"]
-    commits_titles: list[str] = []
-    for commit in commits:
-        commits_titles.append(f"<{commit.html_url}|{commit.sha[0:7]}> {commit.commit.message}")
+    commits_titles = [f"<{commit.html_url}|{commit.sha[0:7]}> {commit.commit.message}" for commit in commits]
     commits_str = "\n".join(commits_titles)
     payload = {
         "attachments": [
@@ -330,8 +302,8 @@ def to_slack(ctx: click.Context, slack_url: str) -> None:
         ]
     }
 
-    if not ctx_obj.get("dry_run", False):
-        result = requests.post(slack_url, json=payload)
+    if not ctx_obj["dry_run"]:
+        result = requests.post(slack_url, json=payload, timeout=10)
         click.echo("->")
         click.echo(result.text)
     else:
@@ -358,8 +330,10 @@ def to_datadog(ctx: click.Context, datadog_key: str) -> None:
         "source": "Git",
     }
 
-    if not ctx_obj.get("dry_run", False):
-        result = requests.post(f"https://app.datadoghq.eu/api/v1/events?api_key={datadog_key}", json=payload)
+    if not ctx_obj["dry_run"]:
+        result = requests.post(
+            f"https://app.datadoghq.eu/api/v1/events?api_key={datadog_key}", json=payload, timeout=10
+        )
         click.echo("->")
         click.echo(result.text)
 
