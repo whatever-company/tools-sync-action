@@ -11,7 +11,7 @@ PyGithub = "==2.3.0"
 semver = "==3.0.2"
 
 [tool.poetry.dev-dependencies]
-ruff = "0.4.7"
+ruff = "0.4.8"
 
 [tool.ruff]
 line-length = 120
