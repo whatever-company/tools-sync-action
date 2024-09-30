@@ -22,9 +22,6 @@ inputs:
   github-token:
     description: "github token needed for API calls"
     required: true
-  datadog-key:
-    description: "Datadog API KEY to post MSG on deploy"
-    required: false
   slack-url:
     description: "Slack Post URL to post MSG on deploy"
     required: false
@@ -54,7 +51,7 @@ runs:
       run: poetry install -C ${{github.action_path}} --only main
 
     - name: Run dev-sync script
-      run: poetry run -C ${{github.action_path}} python ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack to_datadog
+      run: poetry run -C ${{github.action_path}} python ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack
       shell: bash
       env:
         FROM_REF: ${{ inputs.from_ref }}
@@ -66,7 +63,6 @@ runs:
 
         # CREDS
         GH_TOKEN: ${{ inputs.github-token}}
-        DD_API_KEY: ${{ inputs.datadog-key}}
         SLACK_URL: ${{ inputs.slack-url}}
         ZD_USERNAME: ${{ inputs.zendesk-username}}
         ZD_PASSWORD: ${{ inputs.zendesk-password}}

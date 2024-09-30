@@ -310,34 +310,6 @@ def to_slack(ctx: click.Context, slack_url: str) -> None:
         click.echo(json.dumps(payload))
 
 
-@group_from_github.command("to_datadog")
-@click.option("--datadog-key", envvar="DD_API_KEY")
-@click.pass_context
-def to_datadog(ctx: click.Context, datadog_key: str) -> None:
-    click.secho("Announcing release on datadog", fg="green", underline=True)
-    ctx_obj = cast(ContextObj, ctx.obj)
-
-    diff_link = ctx_obj["diff_link"]
-    to_ref = ctx_obj["to_ref"]
-    commits = ctx_obj["commits"]
-    status = ctx_obj["status"]
-    payload = {
-        "title": f"Just deployed {to_ref} on {status}",
-        "text": f" [{len(commits)} commits]({diff_link})",
-        "priority": "normal",
-        "tags": [f"deployment:{status}"],
-        "alert_type": "info",
-        "source": "Git",
-    }
-
-    if not ctx_obj["dry_run"]:
-        result = requests.post(
-            f"https://app.datadoghq.eu/api/v1/events?api_key={datadog_key}", json=payload, timeout=10
-        )
-        click.echo("->")
-        click.echo(result.text)
-
-
 @group_from_github.command("to_test")
 @click.pass_context
 def to_test(ctx: click.Context) -> None:
