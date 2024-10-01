@@ -1,22 +1,19 @@
-FROM python:3.12-slim@sha256:f11725aba18c19664a408902103365eaf8013823ffc56270f921d1dc78a198cb
-
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:af742ab7f0824360d86d3c95028ee56c0070b1d0925b4f880e919ccf501a8488
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install poetry and virtualenv
-COPY poetry-requirements.txt pip-requirements.txt /
-RUN pip install --no-cache-dir -r /poetry-requirements.txt -r pip-requirements.txt \
-    && rm -rf /root/.cache
-
-# Setup our virtualenv workdir and PATH
 WORKDIR /app
-ENV POETRY_VIRTUALENVS_CREATE false
 
-COPY pyproject.toml .
-COPY poetry.lock .
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
-RUN poetry install --only main \
-        && rm -rf /root/.cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
 
-COPY launch.sh dev-sync.py /app/
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
-ENTRYPOINT ["/bin/sh", "/app/launch.sh"]
+ENV PATH="/app/.venv/bin:$PATH"
+ENTRYPOINT ["/app/dev-sync.py", "from_github", "to_zendesk", "to_slack"]

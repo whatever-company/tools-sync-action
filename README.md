@@ -1,6 +1,5 @@
 # Installation
 
-    poetry install
-    poetry shell
+    uv sync
 
-    poetry run python dev-sync.py from_github --dry-run to_test
+    uv run dev-sync.py from_github --dry-run to_test

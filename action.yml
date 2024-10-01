@@ -37,21 +37,16 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Python
-      uses: actions/setup-python@v5
+    - name: Checkout the repository
+      uses: actions/checkout@main
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
       with:
-        python-version: "3.12"
-
-    - name: Install poetry
-      shell: bash
-      run: pip install poetry -r ${{github.action_path}}/poetry-requirements.txt
-
-    - name: Install dependencies
-      shell: bash
-      run: poetry install -C ${{github.action_path}} --only main
+        version: "0.4.18"
+        enable-cache: true
 
     - name: Run dev-sync script
-      run: poetry run -C ${{github.action_path}} python ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack
+      run: uv run --frozen dev-sync.py from_github to_zendesk to_slack
       shell: bash
       env:
         FROM_REF: ${{ inputs.from_ref }}

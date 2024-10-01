@@ -1,17 +1,17 @@
-[tool.poetry]
-package-mode = false
-
-[tool.poetry.dependencies]
-python = ">= 3.12, < 3.13"
-requests = { extras = ["security"], version = "==2.32.3" }
-click = "==8.1.7"
-werkzeug = "==3.0.4"
-python-dotenv = "==1.0.1"
-PyGithub = "==2.4.0"
-semver = "==3.0.2"
-
-[tool.poetry.dev-dependencies]
-ruff = "0.6.8"
+[project]
+name = "toolsync"
+version = "0.1.0"
+description = "sync issue & deploy status between external tools"
+requires-python = "==3.12.*"
+readme = "README.md"
+dependencies = [
+    "click==8.1.7",
+    "pygithub==2.4.0",
+    "python-dotenv==1.0.1",
+    "requests[security]==2.32.3",
+    "semver==3.0.2",
+    "werkzeug==3.0.4",
+]
 
 [tool.ruff]
 line-length = 120
@@ -64,6 +64,5 @@ reportUnnecessaryTypeIgnoreComment = true
 reportShadowedImports = true
 reportMissingTypeStubs = false
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+dev-dependencies = ["ruff==0.6.8"]
