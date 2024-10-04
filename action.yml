@@ -43,8 +43,7 @@ runs:
       uses: astral-sh/setup-uv@v3
       with:
         version: "0.4.18"
-        enable-cache: true
-        cache-dependency-glob: "${{github.action_path}}/uv.lock"
+        enable-cache: false
 
     - name: Run dev-sync script
       run: uv --directory ${{github.action_path}} --frozen ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack
