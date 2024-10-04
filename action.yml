@@ -44,9 +44,10 @@ runs:
       with:
         version: "0.4.18"
         enable-cache: true
+        cache-dependency-glob: "${{github.action_path}}/uv.lock"
 
     - name: Run dev-sync script
-      run: uv run --frozen dev-sync.py from_github to_zendesk to_slack
+      run: uv --directory ${{github.action_path}} --frozen ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack
       shell: bash
       env:
         FROM_REF: ${{ inputs.from_ref }}
