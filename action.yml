@@ -46,7 +46,7 @@ runs:
         enable-cache: false
 
     - name: Run dev-sync script
-      run: uv --directory ${{github.action_path}} --frozen ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack
+      run: uv --directory ${{github.action_path}} run --frozen ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack
       shell: bash
       env:
         FROM_REF: ${{ inputs.from_ref }}
