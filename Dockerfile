@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:0b074d1ae15f5c3f1861354917d356e5afbd5a4c53c1190e81ad2f2add46e45b
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:c79e0c910458f04e0e21902617e938d4b141e46c346f1a929834e0b1eac6df90
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /app
