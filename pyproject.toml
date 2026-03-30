@@ -10,7 +10,7 @@ dependencies = [
     "python-dotenv==1.2.2",
     "requests[security]==2.33.0",
     "semver==3.0.4",
-    "werkzeug==3.1.6",
+    "werkzeug==3.1.7",
 ]
 
 [tool.ruff]
