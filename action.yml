@@ -37,18 +37,17 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout the repository
-      uses: actions/checkout@main
-    - name: Install uv
-      uses: astral-sh/setup-uv@v7
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        version: "0.4.18"
-        enable-cache: false
+        persist-credentials: false
+
+    - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
 
     - name: Run dev-sync script
-      run: uv --directory ${{github.action_path}} run --frozen ${{github.action_path}}/dev-sync.py from_github to_zendesk to_slack
+      run: uv --directory "${ACTION_PATH}" run --frozen "${ACTION_PATH}/dev-sync.py" from_github to_zendesk to_slack
       shell: bash
       env:
+        ACTION_PATH: ${{github.action_path}}
         FROM_REF: ${{ inputs.from_ref }}
         TO_REF: ${{ inputs.to_ref }}
         STATUS: ${{ inputs.status}}

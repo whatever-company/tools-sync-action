@@ -3,14 +3,16 @@
 import contextlib
 import json
 import re
-from collections.abc import Iterable
-from typing import Any, Literal, TypedDict, cast
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, cast
 
 import click
-import requests
+import httpx
 import semver
 from dotenv import load_dotenv
 from github import Commit, Github, GithubException, Issue, Repository
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 # Load dot file as ENV
 load_dotenv()
@@ -56,10 +58,10 @@ class Zendesk:
         self.username = username
         self.password = password
 
-    def update_tickets(self, ids: list[str], payload: dict[str, Any]) -> requests.Response:
+    def update_tickets(self, ids: list[str], payload: dict[str, Any]) -> httpx.Response:
         # https://developer.zendesk.com/rest_api/docs/support/tickets#request-body
 
-        return requests.put(
+        return httpx.put(
             f"{ZENDESK_URL}/api/v2/tickets/update_many.json",
             params={"ids": ",".join(ids)},
             json=payload,
@@ -68,7 +70,7 @@ class Zendesk:
         )
 
     def get_tickets(self, ids: Iterable[str]) -> list[ZendeskTicket] | None:
-        tickets = requests.get(
+        tickets = httpx.get(
             f"{ZENDESK_URL}/api/v2/tickets/show_many.json",
             params={"ids": ",".join(ids)},
             auth=(self.username, self.password),
@@ -123,7 +125,7 @@ def group_from_github(
     click.echo(f"received from_ref={from_ref} to_ref={to_ref} status={status}")
 
     ctx.ensure_object(dict)
-    ctx_obj = cast(ContextObj, ctx.obj)
+    ctx_obj = cast("ContextObj", ctx.obj)
 
     # pass down some var
     ctx_obj["dry_run"] = dry_run
@@ -178,7 +180,7 @@ def group_from_github(
 @click.pass_context
 def to_zendesk(ctx: click.Context, zd_username: str, zd_password: str) -> None:
     click.secho("Sync to Zendesk", fg="green", underline=True)
-    ctx_obj = cast(ContextObj, ctx.obj)
+    ctx_obj = cast("ContextObj", ctx.obj)
     status = ctx_obj["status"]
 
     if status not in ("production", "staging", "development"):
@@ -232,23 +234,23 @@ def to_zendesk(ctx: click.Context, zd_username: str, zd_password: str) -> None:
             }
         }
 
-        click.echo(f'got {ticket["id"]} in status : {ticket["status"]}')
+        click.echo(f"got {ticket['id']} in status : {ticket['status']}")
 
         # Avoid resync what's already synced
         if "deployed-in-production" in ticket["tags"]:
-            click.echo(f'skip {ticket["id"]}, already in production')
+            click.echo(f"skip {ticket['id']}, already in production")
             continue
         if "deployed-in-staging" in ticket["tags"] and status != "production":
-            click.echo(f'skip {ticket["id"]}, already marked as synced in staging')
+            click.echo(f"skip {ticket['id']}, already marked as synced in staging")
             continue
         if "deployed-in-development" in ticket["tags"] and status not in ("production", "staging"):
-            click.echo(f'skip {ticket["id"]}, already marked as synced in development')
+            click.echo(f"skip {ticket['id']}, already marked as synced in development")
             continue
 
         if status == "production" and ticket["status"] not in ("closed", "solved"):
             payload["ticket"]["status"] = "open"
 
-        click.echo(f'syncing ticket {ticket["id"]}')
+        click.echo(f"syncing ticket {ticket['id']}")
         if not ctx_obj["dry_run"]:
             response = zd.update_tickets([str(ticket["id"])], payload)
             click.echo(f"ZD update: {response.text}")
@@ -259,7 +261,7 @@ def to_zendesk(ctx: click.Context, zd_username: str, zd_password: str) -> None:
 @click.pass_context
 def to_slack(ctx: click.Context, slack_url: str) -> None:
     click.secho("Announcing release on slack", fg="green", underline=True)
-    ctx_obj = cast(ContextObj, ctx.obj)
+    ctx_obj = cast("ContextObj", ctx.obj)
     status = ctx_obj["status"]
     project_name = ctx_obj["repository"].name
     project_icon = PROJECT_TO_EMOJI.get(project_name, "")
@@ -303,7 +305,7 @@ def to_slack(ctx: click.Context, slack_url: str) -> None:
     }
 
     if not ctx_obj["dry_run"]:
-        result = requests.post(slack_url, json=payload, timeout=10)
+        result = httpx.post(slack_url, json=payload, timeout=10)
         click.echo("->")
         click.echo(result.text)
     else:
@@ -314,7 +316,7 @@ def to_slack(ctx: click.Context, slack_url: str) -> None:
 @click.pass_context
 def to_test(ctx: click.Context) -> None:
     click.secho("Sync to TEST", fg="green", underline=True)
-    ctx_obj = cast(ContextObj, ctx.obj)
+    ctx_obj = cast("ContextObj", ctx.obj)
     status = ctx_obj["status"]
     click.echo(f"syncing status {status}")
     for issue in ctx_obj["issues"]:

@@ -2,20 +2,28 @@
 name = "toolsync"
 version = "0.1.0"
 description = "sync issue & deploy status between external tools"
-requires-python = "==3.12.*"
+requires-python = ">=3.14"
 readme = "README.md"
 dependencies = [
     "click==8.3.2",
     "pygithub==2.9.1",
     "python-dotenv==1.2.2",
-    "requests[security]==2.33.1",
+    "httpx==0.28.1",
     "semver==3.0.4",
-    "werkzeug==3.1.8",
 ]
+
+[dependency-groups]
+dev = ["ruff==0.15.10"]
+
+[tool.uv]
+required-version = ">=0.8"
+
+[tool.uv.build-backend]
+module-name = ["dev-sync.py"]
+module-root = ""
 
 [tool.ruff]
 line-length = 120
-target-version = "py312"
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -31,8 +39,6 @@ ignore = [
     "D1",     # missing docstrings
     "D211",
     "D213",
-    "ANN101", # Annotations for self
-    "ANN102", # Annotations for cls
     "ANN204", # Return annotations for special methods
     "ANN401", # Forbid Any
     "N801",
@@ -49,6 +55,7 @@ ignore = [
     "N999",   # Various naming conventions around case
     "PLR09",  # Too many arguments
     "S101",   # Use of assert ..
+    "D203",   # 1 blank line required after class docstring
 ]
 select = ["ALL"]
 
@@ -63,6 +70,4 @@ reportPropertyTypeMismatch = true
 reportUnnecessaryTypeIgnoreComment = true
 reportShadowedImports = true
 reportMissingTypeStubs = false
-
-[tool.uv]
-dev-dependencies = ["ruff==0.6.8"]
+reportUnreachable = true
