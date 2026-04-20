@@ -7,17 +7,22 @@ updates:
       interval: "weekly"
       time: "07:00"
       timezone: "Europe/Brussels"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     commit-message:
       prefix: "ci"
       include: "scope"
 
-  - package-ecosystem: "pip"
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
       time: "07:00"
       timezone: "Europe/Brussels"
+    cooldown:
+      default-days: 7
+    insecure-external-code-execution: "deny"
     open-pull-requests-limit: 30
     commit-message:
       prefix: "deps"
@@ -30,6 +35,8 @@ updates:
       interval: "weekly"
       time: "07:00"
       timezone: "Europe/Brussels"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     commit-message:
       prefix: "deps"
