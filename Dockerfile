@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:0.12.1-alpine@sha256:0aad8ff88b5967fcb7a27ae630c2f02556897eb7eb6e5f9347f18e25145bcd10 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.3-alpine@sha256:5c122244bea9d255105d4d4400de450ec171296733a326eba624e0278cf0c75e AS uv
 SHELL ["/bin/sh", "-o", "pipefail", "-c"]
 
 WORKDIR /app
