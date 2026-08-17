@@ -52,6 +52,7 @@ ignore = [
     "N815",
     "N816",
     "N818",
+    "CPY001", # missing-copyright-notice
     "N999",   # Various naming conventions around case
     "PLR09",  # Too many arguments
     "S101",   # Use of assert ..
