@@ -7,7 +7,7 @@ readme = "README.md"
 dependencies = [
     "click==8.4.2",
     "pygithub==2.9.1",
-    "python-dotenv==1.2.2",
+    "python-dotenv==1.2.3",
     "httpx==0.28.1",
     "semver==3.0.4",
 ]
