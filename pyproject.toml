@@ -8,7 +8,7 @@ dependencies = [
     "click==8.4.2",
     "pygithub==2.10.0",
     "python-dotenv==1.2.3",
-    "httpx==0.28.1",
+    "httpx2==2.10.0",
     "semver==3.0.4",
 ]
 
@@ -17,6 +17,11 @@ dev = ["ruff==0.16.4"]
 
 [tool.uv]
 required-version = ">=0.8"
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
 
 [tool.uv.build-backend]
 module-name = ["dev-sync.py"]

@@ -25,11 +25,11 @@ inputs:
   slack-url:
     description: "Slack Post URL to post MSG on deploy"
     required: false
-  zendesk-username:
-    description: "Zendesk username to post MSG on deploy"
+  zendesk-client-id:
+    description: "Zendesk OAuth client identifier to post MSG on deploy"
     required: false
-  zendesk-password:
-    description: "Zendesk password to post MSG on deploy"
+  zendesk-client-secret:
+    description: "Zendesk OAuth client secret to post MSG on deploy"
     required: false
 outputs:
   status:
@@ -58,5 +58,5 @@ runs:
         # CREDS
         GH_TOKEN: ${{ inputs.github-token}}
         SLACK_URL: ${{ inputs.slack-url}}
-        ZD_USERNAME: ${{ inputs.zendesk-username}}
-        ZD_PASSWORD: ${{ inputs.zendesk-password}}
+        ZD_CLIENT_ID: ${{ inputs.zendesk-client-id}}
+        ZD_CLIENT_SECRET: ${{ inputs.zendesk-client-secret}}

@@ -3,16 +3,16 @@
 import contextlib
 import json
 import re
-from typing import TYPE_CHECKING, Any, Literal, TypedDict, cast
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, cast, override
 
 import click
-import httpx
+import httpx2
 import semver
 from dotenv import load_dotenv
 from github import Commit, Github, GithubException, Issue, Repository
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Generator, Iterable
 
 # Load dot file as ENV
 load_dotenv()
@@ -53,28 +53,56 @@ class ZendeskTicket(TypedDict):
     tags: list[str]
 
 
+class ClientCredentialsAuth(httpx2.Auth):
+    """Zendesk OAuth client credentials: one short-lived token, fetched on first use."""
+
+    def __init__(self, client_id: str, client_secret: str, scope: str):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.scope = scope
+        self.access_token: str | None = None
+
+    @override
+    def sync_auth_flow(self, request: httpx2.Request) -> Generator[httpx2.Request, httpx2.Response]:
+        if self.access_token is None:
+            response = yield httpx2.Request(
+                "POST",
+                f"{ZENDESK_URL}/oauth/tokens",
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                    "scope": self.scope,
+                },
+            )
+            response.read()
+            response.raise_for_status()
+            self.access_token = cast("str", response.json()["access_token"])
+        request.headers["Authorization"] = f"Bearer {self.access_token}"
+        yield request
+
+
 class Zendesk:
-    def __init__(self, username: str, password: str):
-        self.username = username
-        self.password = password
-
-    def update_tickets(self, ids: list[str], payload: dict[str, Any]) -> httpx.Response:
-        # https://developer.zendesk.com/rest_api/docs/support/tickets#request-body
-
-        return httpx.put(
-            f"{ZENDESK_URL}/api/v2/tickets/update_many.json",
-            params={"ids": ",".join(ids)},
-            json=payload,
-            auth=(self.username, self.password),
+    def __init__(self, client_id: str, client_secret: str):
+        self.client = httpx2.Client(
+            base_url=ZENDESK_URL,
+            auth=ClientCredentialsAuth(client_id, client_secret, "tickets:read tickets:write"),
             timeout=10,
         )
 
-    def get_tickets(self, ids: Iterable[str]) -> list[ZendeskTicket] | None:
-        tickets = httpx.get(
-            f"{ZENDESK_URL}/api/v2/tickets/show_many.json",
+    def update_tickets(self, ids: list[str], payload: dict[str, Any]) -> httpx2.Response:
+        # https://developer.zendesk.com/rest_api/docs/support/tickets#request-body
+
+        return self.client.put(
+            "/api/v2/tickets/update_many.json",
             params={"ids": ",".join(ids)},
-            auth=(self.username, self.password),
-            timeout=10,
+            json=payload,
+        )
+
+    def get_tickets(self, ids: Iterable[str]) -> list[ZendeskTicket] | None:
+        tickets = self.client.get(
+            "/api/v2/tickets/show_many.json",
+            params={"ids": ",".join(ids)},
         ).json()
 
         click.echo(f"tickets received from ZD: {tickets}")
@@ -175,10 +203,10 @@ def group_from_github(
 
 
 @group_from_github.command("to_zendesk")
-@click.option("--zd-username", envvar="ZD_USERNAME")
-@click.option("--zd-password", envvar="ZD_PASSWORD")
+@click.option("--zd-client-id", envvar="ZD_CLIENT_ID")
+@click.option("--zd-client-secret", envvar="ZD_CLIENT_SECRET")
 @click.pass_context
-def to_zendesk(ctx: click.Context, zd_username: str, zd_password: str) -> None:
+def to_zendesk(ctx: click.Context, zd_client_id: str, zd_client_secret: str) -> None:
     click.secho("Sync to Zendesk", fg="green", underline=True)
     ctx_obj = cast("ContextObj", ctx.obj)
     status = ctx_obj["status"]
@@ -187,7 +215,7 @@ def to_zendesk(ctx: click.Context, zd_username: str, zd_password: str) -> None:
         click.echo(f"Not syncing status {status}")
         return
 
-    zd = Zendesk(zd_username, zd_password)
+    zd = Zendesk(zd_client_id, zd_client_secret)
 
     zd_ticket_ids: set[str] = set()
     issue_to_commit: dict[str, Commit.Commit] = {}
@@ -305,7 +333,7 @@ def to_slack(ctx: click.Context, slack_url: str) -> None:
     }
 
     if not ctx_obj["dry_run"]:
-        result = httpx.post(slack_url, json=payload, timeout=10)
+        result = httpx2.post(slack_url, json=payload, timeout=10)
         click.echo("->")
         click.echo(result.text)
     else:
