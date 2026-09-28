@@ -260,15 +260,15 @@ wheels = [
 
 [[package]]
 name = "ruff"
-version = "0.16.7"
+version = "0.16.8"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/82/bb/5a449b9162e49b139d72f61672bd3ac1d790221f796d3304e2241fff4c58/ruff-0.16.7.tar.gz", hash = "sha256:5f71d004ac1263b22fa39462ac5ae618a4b77d58981af2cc79bf79a29c12b1a6", size = 4924184, upload-time = "2026-09-10T18:04:06.336Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/78/449cb84790bd5cc3823b2652ee405a4558856e5c4195aee3a16bf7b3eb5d/ruff-0.16.8.tar.gz", hash = "sha256:9247bf92b5f04d825c8639a4fe423ec2e4222acd9222e58412b0dab7e442798b", size = 4938814, upload-time = "2026-09-16T15:54:46.688Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/90/b2/f184b0d5abec02db69cfd7e49b688ae0237554528ca777136c613bf36bee/ruff-0.16.7-py3-none-macosx_11_0_arm64.whl", hash = "sha256:7ab81118df8945e0193d0240712aa4496573595b75185c3636ed825592a0f728", size = 9847245, upload-time = "2026-09-10T18:03:34.509Z" },
-    { url = "https://files.pythonhosted.org/packages/eb/2d/db1633a641866ed801e34cc6b60ef236c5e16f9b2124ab1d49cc24a5fe4f/ruff-0.16.7-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4c196c968874fc8019da8e7163de7a1a370f111e2309b4b7dfea0fce950198d0", size = 9961780, upload-time = "2026-09-10T18:03:36.618Z" },
-    { url = "https://files.pythonhosted.org/packages/21/33/81f3da371942ea031105ba679d8d6e28ec1660ccd690a45f42d381161356/ruff-0.16.7-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9ce7f8f22df67c93ed96c717f9128eadb797144ac2bad475cf536f31d6100c55", size = 10370001, upload-time = "2026-09-10T18:03:46.706Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/4d/c5576adf511f92a328e5569dda190ecdd430da51f1a649f3a4a2fd73e21e/ruff-0.16.7-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:142151a5e7b93c1b11111337142f89dd2fbfee92161225c99a97222f22e32656", size = 10108496, upload-time = "2026-09-10T18:03:50.563Z" },
-    { url = "https://files.pythonhosted.org/packages/68/49/56f9c3a8b755df93a0ad318b2147bf4ef5dae9a7e5ec61c460109c67957f/ruff-0.16.7-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:53e39506a730fadeee0d998ed5946f30671f0db240c6c7c73bdabbe33604bb6f", size = 10745048, upload-time = "2026-09-10T18:03:57.299Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/1f/e6a712e3b47cad4a40600134105ed193cb773f618a42eb7ba323cb812cc0/ruff-0.16.8-py3-none-macosx_11_0_arm64.whl", hash = "sha256:7ea781c7f2afba8c6a505ea0fb3f994020249e0c450635f5381286fea6b46170", size = 9830004, upload-time = "2026-09-16T15:54:03.998Z" },
+    { url = "https://files.pythonhosted.org/packages/23/f2/311a08776d75d81c7676e20b6b020ae63cbe881fcdc7a8dd64e6e18bdd93/ruff-0.16.8-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8efeae3bbe414a5efefda11a792dfb51ef90ac48d50c4830de2f644caf3e8659", size = 9986558, upload-time = "2026-09-16T15:54:06.804Z" },
+    { url = "https://files.pythonhosted.org/packages/1a/41/d83af9879a7b6e8bf5fe16b1da0b134049d2f5d3afac12defb0897cb84bd/ruff-0.16.8-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:15e7d226246961db9235098333caa13063906d3851136b84c2900b82f5daa1df", size = 10323796, upload-time = "2026-09-16T15:54:20.743Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/9d/76a2e26c79a23be6e6e3664c57bec9e9fc8de155cfb9e4b67ea91b64f9d7/ruff-0.16.8-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:6ca111ba0849539165e9e59d2b442542f3c1e8060ebbdea82494f1ffbccb1e1f", size = 10072582, upload-time = "2026-09-16T15:54:26.185Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/c4/8aa6ea0bdcedbd1bf87397e2fc4ed8406448ea5842f8660bc6e5f163039d/ruff-0.16.8-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:efa3e7a16d1baaa79957888dfdf8be9ef2e44db81cb032af06d76632ab59e773", size = 10663666, upload-time = "2026-09-16T15:54:34.838Z" },
 ]
 
 [[package]]
@@ -307,7 +307,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = "==0.16.7" }]
+dev = [{ name = "ruff", specifier = "==0.16.8" }]
 
 [[package]]
 name = "truststore"
