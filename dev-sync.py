@@ -9,7 +9,7 @@ import click
 import httpx2
 import semver
 from dotenv import load_dotenv
-from github import Commit, Github, GithubException, Issue, Repository
+from github import Auth, Commit, Github, GithubException, Issue, Repository
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
@@ -33,6 +33,23 @@ PROJECT_TO_EMOJI = {
     "learn": "📄",
     # 'infra/...': '🏗',
 }
+
+
+def find_previous_version(project: Repository.Repository, to_ref: str, *, linear: bool) -> semver.Version:
+    """Highest `v*` tag below `to_ref`. Unless `linear`, releases and pre-releases only match their own kind."""
+    current_version = semver.Version.parse(to_ref.removeprefix("v"))
+    previous_version = semver.Version(0)
+    # Unlike /tags (30 per page, ~60 calls for elium-web), matching-refs returns every tag in one response
+    for tag_ref in project.get_git_matching_refs("tags/v"):
+        try:
+            tag_version = semver.Version.parse(tag_ref.ref.removeprefix("refs/tags/v"))
+        except ValueError:
+            continue
+        if not linear and bool(current_version.prerelease) != bool(tag_version.prerelease):
+            continue
+        if previous_version < tag_version < current_version:
+            previous_version = tag_version
+    return previous_version
 
 
 def get_issues_from_commits(project: Repository.Repository, commits: list[Commit.Commit]) -> list[Issue.Issue]:
@@ -158,29 +175,13 @@ def group_from_github(
     # pass down some var
     ctx_obj["dry_run"] = dry_run
 
-    gh_client = Github(token)
+    gh_client = Github(auth=Auth.Token(token))
     ctx_obj["repository"] = gh_client.get_repo(project)
 
     ctx_obj["to_ref"] = to_ref
     if not from_ref and to_ref.startswith("v"):
         click.echo(f"Process preceding version of {to_ref}")
-        current_version = semver.parse_version_info(to_ref[1:])
-        tags = ctx_obj["repository"].get_tags()
-        previous_version = semver.parse_version_info("0.0.0")
-        for git_tag in tags:
-            try:
-                tag_version = semver.parse_version_info(git_tag.name[1:])
-            except ValueError:
-                continue
-            if not linear and (
-                (current_version.prerelease and not tag_version.prerelease)
-                or (not current_version.prerelease and tag_version.prerelease)
-            ):
-                # only tag pre release toghether or release toghether
-                continue
-            if tag_version < current_version and tag_version > previous_version:
-                previous_version = tag_version
-        from_ref = f"v{previous_version}"
+        from_ref = f"v{find_previous_version(ctx_obj['repository'], to_ref, linear=linear)}"
         click.echo(f"Found from {from_ref}")
 
     ctx_obj["from_ref"] = from_ref
