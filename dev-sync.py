@@ -9,7 +9,7 @@ import click
 import httpx2
 import semver
 from dotenv import load_dotenv
-from github import Auth, Commit, Github, GithubException, Issue, Repository
+from github import Auth, Commit, Github, GithubException, Issue, PullRequest, Repository
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
@@ -62,6 +62,29 @@ def get_issues_from_commits(project: Repository.Repository, commits: list[Commit
         with contextlib.suppress(GithubException):
             issues.append(project.get_issue(int(i)))
     return issues
+
+
+def get_pulls_from_commits(commits: list[Commit.Commit]) -> list[PullRequest.PullRequest]:
+    """Return the merged pull requests that brought `commits`, from GitHub's commit link, not `#n` in messages."""
+    pulls: dict[int, PullRequest.PullRequest] = {}
+    for commit in commits:
+        for pull in commit.get_pulls():
+            if pull.merged:
+                pulls[pull.number] = pull
+    return list(pulls.values())
+
+
+def get_open_dependents(issue: Issue.Issue) -> list[Issue.Issue]:
+    """Open pull requests of other repositories that mention `issue`, e.g. a web PR linking the backend PR it needs."""
+    dependents: dict[str, Issue.Issue] = {}
+    for event in issue.get_timeline():
+        if event.event != "cross-referenced" or event.source is None:
+            continue
+        source = event.source.issue
+        if source.pull_request is None or source.state != "open" or source.repository_url == issue.repository_url:
+            continue
+        dependents[source.html_url] = source
+    return list(dependents.values())
 
 
 class ZendeskTicket(TypedDict):
@@ -339,6 +362,52 @@ def to_slack(ctx: click.Context, slack_url: str) -> None:
         click.echo(result.text)
     else:
         click.echo(json.dumps(payload))
+
+
+@group_from_github.command("to_github")
+@click.option(
+    "--dependents-token",
+    envvar="GH_DEPENDENTS_TOKEN",
+    help="Token that can read and comment where the PRs mentioning a deployed PR live; without it they are skipped",
+)
+@click.pass_context
+def to_github(ctx: click.Context, dependents_token: str | None) -> None:
+    click.secho("Labelling deployed pull requests", fg="green", underline=True)
+    ctx_obj = cast("ContextObj", ctx.obj)
+    status = ctx_obj["status"]
+    if status not in ("production", "staging"):
+        click.echo("Labelling only prod/staging deployments")
+        return
+
+    label = f"deployed: {status}"
+    project = ctx_obj["repository"]
+    # The workflow token cannot see mentions from other private repositories, hence a token of its own
+    dependents_repo = None
+    if dependents_token:
+        dependents_repo = Github(auth=Auth.Token(dependents_token)).get_repo(project.full_name)
+
+    for pull in get_pulls_from_commits(ctx_obj["commits"]):
+        if any(existing.name == label for existing in pull.labels):
+            click.echo(f"skip #{pull.number}, already labelled {label}")
+            continue
+        click.echo(f"labelling #{pull.number} {label}")
+        if not ctx_obj["dry_run"]:
+            try:
+                pull.add_to_labels(label)
+            except GithubException as error:
+                click.echo(f"cannot label #{pull.number}: {error.status} {error.data}")
+
+        # A PR waiting on this one can be reviewed once it is on staging, which the review apps use
+        if status != "staging" or dependents_repo is None:
+            continue
+        message = f"{project.full_name}#{pull.number} is deployed on {status} ({ctx_obj['to_ref']})."
+        for dependent in get_open_dependents(dependents_repo.get_issue(pull.number)):
+            click.echo(f"notifying {dependent.html_url}")
+            if not ctx_obj["dry_run"]:
+                try:
+                    dependent.create_comment(message)
+                except GithubException as error:
+                    click.echo(f"cannot comment on {dependent.html_url}: {error.status} {error.data}")
 
 
 @group_from_github.command("to_test")
