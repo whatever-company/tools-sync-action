@@ -31,6 +31,9 @@ inputs:
   zendesk-client-secret:
     description: "Zendesk OAuth client secret to post MSG on deploy"
     required: false
+  dependents-token:
+    description: "Token that can read and comment in the repositories whose open PRs mention a deployed PR (staging only); without it they are not notified"
+    required: false
 outputs:
   status:
     description: "Log of status"
@@ -40,7 +43,7 @@ runs:
     - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
     - name: Run dev-sync script
-      run: uv --directory "${ACTION_PATH}" run --frozen "${ACTION_PATH}/dev-sync.py" from_github to_zendesk to_slack
+      run: uv --directory "${ACTION_PATH}" run --frozen "${ACTION_PATH}/dev-sync.py" from_github to_zendesk to_slack to_github
       shell: bash
       env:
         ACTION_PATH: ${{github.action_path}}
@@ -56,3 +59,4 @@ runs:
         SLACK_URL: ${{ inputs.slack-url}}
         ZD_CLIENT_ID: ${{ inputs.zendesk-client-id}}
         ZD_CLIENT_SECRET: ${{ inputs.zendesk-client-secret}}
+        GH_DEPENDENTS_TOKEN: ${{ inputs.dependents-token }}
